@@ -114,29 +114,33 @@ var POEM_WORDS = {
  'Región Llanos':['los llanos','el horizonte','la resolana'],
  'Región Guayana':['la guayana','el tepuy','el oro'],
  'Región Insular':['la isla','la marea','el faro'],
- 'Con tilde':['acento','tildada','sonora'],
+ 'Con tilde':['acento','tildada','sonora',','],
  'Puerto':['el puerto','los barcos','la bahía'],
- 'Santoral':['santa','bendita','la iglesia'],
+ 'Santoral':['santa','bendita','la iglesia','amén'],
  'Con agua':['el agua','la corriente','nadar'],
- 'Letra doble':['gemela','eco','repetida'],
- 'Pocas letras':['breve','mini','corta'],
- 'Nombre kilométrico':['eterna','interminable','kilométrica'],
+ 'Letra doble':['gemela','eco','repetida','—'],
+ 'Pocas letras':['breve','mini','corta','.'],
+ 'Nombre kilométrico':['eterna','interminable','kilométrica','!'],
  'Monovocal':['monótona','una sola vocal','canto'],
- 'Espejo':['espejo','reversible','reflejo'],
- 'Diéresis':['trémula','diéresis'],
- 'Compuesto':['compuesta','dos nombres','el guion'],
- 'Con artículo':['el','la','articulada'],
- 'Letra rara':['equis','extraña','rara'],
- 'Palíndromo':['circular','palíndroma','ida y vuelta'],
+ 'Espejo':['espejo','reversible','reflejo','…'],
+ 'Diéresis':['trémula','diéresis','ü'],
+ 'Compuesto':['compuesta','dos nombres','-','y'],
+ 'Con artículo':['el','la','los','las','un','una'],
+ 'Letra rara':['equis','extraña','rara','?'],
+ 'Palíndromo':['circular','palíndroma','ida y vuelta','¡'],
  'Costero':['la sal','la arena','la ola','la playa'],
  'Insular':['náufraga','el coral','la isla'],
  'Andino':['el páramo','la cumbre','la montaña'],
  'Selvático':['la selva','el verde hondo','la canoa'],
  'Llanero':['el llano','el hato','la cola']};
 function stopsName(st){var p=st.id&&BYID[st.id];return p?displayName(p):st.n;}
+/* pegamento base: sin conectores ningún verso cuaja; la puntuación es bonus de badges */
+var POEM_GLUE = ['el','la','los','las','de','en','y','con','sin','un','una','hacia'];
+var POEM_MAX = 10;
 function wordPool(roll){
  var pool=[];
  function add(w){if(pool.indexOf(w)<0)pool.push(w);}
+ POEM_GLUE.forEach(add);
  roll.stops.forEach(function(st){
   st.b.forEach(function(x){(POEM_WORDS[x.n]||[]).forEach(add);});
   add(stopsName(st));
@@ -149,6 +153,16 @@ function wordPool(roll){
   if(/insular/.test(x.n))['por barco'].forEach(add);
  });
  return pool;
+}
+/* une el verso pegando la puntuación al vecino correcto: "sal , playa" -> "sal, playa" */
+function versify(ws){
+ var s='';
+ ws.forEach(function(w){
+  if(/^[,.;:!?—\-…]$/.test(w)) s=s.trimEnd()+w+' ';
+  else if(/^[¡¿]$/.test(w)) s=s+w;
+  else s+=w+' ';
+ });
+ return s.trim();
 }
 function poem(roll){
  var words=[];
@@ -186,6 +200,6 @@ G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
  norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace,
- hav:hav, orderRoute:orderRoute, pickStops:pickStops, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool
+ hav:hav, orderRoute:orderRoute, pickStops:pickStops, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, versify:versify, POEM_MAX:POEM_MAX
 };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -111,6 +111,7 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .poem .hint{color:var(--muted);font-size:12px}
 .pool{display:flex;flex-wrap:wrap;gap:2px}
 .pool .mini{color:var(--muted)}
+.pool .mini:disabled{opacity:.35;cursor:default}
 
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
@@ -319,11 +320,13 @@ function renderPoem(r){
  if(!r){box.hidden=true;return;}
  box.hidden=false;r.poem=r.poem||[];
  var pool=VL.wordPool(r);
- pe.innerHTML=r.poem.length
+ pe.innerHTML=(r.poem.length
   ? r.poem.map(function(w,i){return '<button class="mini" data-i="'+i+'">'+w+'</button>';}).join('')
-  : '<span class="hint">Sugerencia: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma la tuya tocando palabras ↓</span>';
+  : '<span class="hint">Sugerencia: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma la tuya tocando palabras ↓</span>')
+  +'<span class="hint">'+r.poem.length+'/'+VL.POEM_MAX+'</span>';
+ var full=r.poem.length>=VL.POEM_MAX;
  pl.innerHTML=pool.map(function(w,i){
-  return r.poem.indexOf(w)<0?'<button class="mini" data-p="'+i+'">'+w+'</button>':'';
+  return r.poem.indexOf(w)<0?'<button class="mini" data-p="'+i+'"'+(full?' disabled':'')+'>'+w+'</button>':'';
  }).join('');
 }
 
@@ -536,7 +539,7 @@ $('#shareBtn').addEventListener('click',function(){
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
- var verso=(r.poem&&r.poem.length?r.poem.join(' '):VL.poem(r));
+ var verso=(r.poem&&r.poem.length?VL.versify(r.poem):VL.poem(r));
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
   (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
@@ -553,7 +556,8 @@ $('#unl').addEventListener('change',function(e){S.unl=e.target.checked;save();up
 $('#tPool').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;
  var r=todayRoll()||S.rolls[0];if(!r)return;
- r.poem=r.poem||[];r.poem.push(VL.wordPool(r)[+b.dataset.p]);save();renderPoem(r);
+ r.poem=r.poem||[];if(r.poem.length>=VL.POEM_MAX)return;
+ r.poem.push(VL.wordPool(r)[+b.dataset.p]);save();renderPoem(r);
 });
 $('#tPoem').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;

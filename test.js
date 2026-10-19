@@ -60,6 +60,9 @@ var po = VL.poem(roll);
 ok(po.split('\n').length === 3 && po.indexOf('Caracas') >= 0 && po.indexOf('Valencia') >= 0 && /acento|la sal/.test(po), 'poema 3 versos con extremos y palabras de badges');
 var pool = VL.wordPool(roll);
 ok(pool.indexOf('acento') >= 0 && pool.indexOf('la sal') >= 0 && pool.indexOf('Caracas') >= 0 && pool.length === new Set(pool).size, 'wordPool incluye palabras de badges + nombres, sin dups');
+ok(pool.indexOf('de') >= 0 && pool.indexOf(',') >= 0, 'pool trae conectores base + puntuación de badge');
+ok(VL.versify(['la','sal',',','la','playa','!']) === 'la sal, la playa!', 'versify pega la puntuación');
+ok(VL.POEM_MAX === 10, 'limite 10 palabras');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
