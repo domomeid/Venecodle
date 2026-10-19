@@ -90,6 +90,23 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 #map:not([hidden]){animation:pop .5s ease}
 @media (prefers-reduced-motion:reduce){.slot .reel{transition:none}.stops li.pop,#tBadges .badge,#map{animation:none}}
 
+/* paneles laterales: a los lados en pantallas anchas, antes del mapa en angostas */
+.hoygrid{display:grid;gap:16px}
+@media(min-width:1180px){.hoygrid{grid-template-columns:280px 680px 280px;justify-content:center;align-items:start;
+  grid-template-areas:'l t r' 'l m r' 'l a r' 'l n r'}
+ .hoygrid #ticket{grid-area:t}.hoygrid #railL{grid-area:l}.hoygrid #railR{grid-area:r}
+ .hoygrid #map{grid-area:m}.hoygrid .actions{grid-area:a}.hoygrid #msg{grid-area:n}}
+.card{background:var(--surface);border:2px solid var(--fg);padding:14px 16px;animation:pop .5s ease}
+.card h3{font-size:13px;margin:0 0 8px}
+.card .wtitle{font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;line-height:1}
+.card p{margin:6px 0;font-size:13px}
+.card a{color:var(--r2)}
+.wx{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.wx:last-child{border-bottom:0}
+.wx b{overflow-wrap:anywhere}
+.wx span{font-family:var(--f-mono);white-space:nowrap}
+.poem{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);white-space:pre-line;border-left:3px solid var(--accent);padding:4px 10px;margin:0 0 14px}
+
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .leaflet-container{font-family:var(--f-body)}
@@ -160,15 +177,22 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
   </nav>
 
   <section id="hoy" aria-labelledby="tab-hoy">
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="hoygrid">
+      <aside class="rail" id="railL" hidden>
+        <div class="card"><h3 class="tag">El lugar del día</h3><div id="railLB"></div></div>
+      </aside>
       <div class="ticket" id="ticket">
         <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
         <div class="t-name idle" id="tName">? ? ?</div>
         <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
         <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
+        <div class="poem" id="tPoem" hidden></div>
         <div class="stub"><span id="tProb">Pulsa el botón para arrancar tu roadtrip de hoy.</span><span id="tWait"></span></div>
       </div>
+      <aside class="rail" id="railR" hidden>
+        <div class="card"><h3 class="tag">El clima en ruta</h3><div id="railRB"></div></div>
+      </aside>
       <div id="map" hidden></div>
       <div class="actions">
         <button class="btn primary" id="rollBtn">Arrancar roadtrip</button>
@@ -262,8 +286,8 @@ function stopHtml(st,i){
 function showTicket(r){
  var name=$('#tName');
  if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;
-  $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';
-  $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);return;}
+  $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';$('#tPoem').hidden=true;
+  $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);renderExtras(null);return;}
  var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
  name.textContent=dname(st0);name.className='t-name'+(dname(st0).length>16?' long':'');
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
@@ -275,8 +299,10 @@ function showTicket(r){
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
  $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
+ var pm=$('#tPoem');pm.textContent=VL.poem(r);pm.hidden=false;
  $('#shareBtn').hidden=false;
  renderMap(r);
+ renderExtras(r);
 }
 
 function stats(){
@@ -344,6 +370,53 @@ function renderMap(r){
   if(pts.length)map.fitBounds(pts,{padding:[24,24]});
   setTimeout(function(){if(map)map.invalidateSize();},80);
  }catch(e){el.hidden=true;}
+}
+
+/* datos extra: jerarquía wiki (1 lugar destacado) > clima Open-Meteo > pob/elev GeoNames */
+var WXE={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',77:'🌨️',80:'🌦️',81:'🌦️',82:'🌦️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
+function ficha(p,extra){
+ var bits=[];
+ if(p.p)bits.push(fmt(p.p)+' hab');
+ if(p.e)bits.push(fmt(p.e)+' m s. n. m.');
+ if(!bits.length)bits.push(REG[p.r]);
+ return '<span class="wtitle">'+VL.displayName(p)+'</span><p>'+(extra||bits.join(' · '))+'</p>';
+}
+function wikiTry(p,titles){
+ if(!titles.length)return Promise.resolve(null);
+ var t=titles.shift();
+ return fetch('https://es.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(t))
+  .then(function(res){return res.ok?res.json():null;})
+  .then(function(j){
+   if(j&&j.extract&&j.type==='standard')
+    return '<span class="wtitle">'+j.title+'</span><p>'+j.extract+'</p><p><a href="'+j.content_urls.desktop.page+'" target="_blank" rel="noopener">Leer en Wikipedia →</a></p>';
+   return wikiTry(p,titles);
+  }).catch(function(){return null;});
+}
+function renderExtras(r){
+ var L=$('#railL'),R=$('#railR');
+ if(!r||!r.stops.length){L.hidden=true;R.hidden=true;return;}
+ var star=r.stops.slice().sort(function(a,b){return b.k-a.k||b.ep-a.ep;})[0];
+ var p=star.id&&BYID[star.id];if(!p){L.hidden=true;R.hidden=true;return;}
+ L.hidden=false;R.hidden=false;
+ $('#railLB').innerHTML=ficha(p,'…');
+ wikiTry(p,[p.n+', Venezuela',p.n+', '+p.s,p.n]).then(function(html){
+  if(S.rolls[0]===r)$('#railLB').innerHTML=html||ficha(p);
+ });
+ var lats=r.stops.map(function(s){var q=BYID[s.id];return q&&q.la;}).filter(function(x){return x!=null;});
+ var lngs=r.stops.map(function(s){var q=BYID[s.id];return q&&q.ln;}).filter(function(x){return x!=null;});
+ $('#railRB').innerHTML='<span class="note">…</span>';
+ fetch('https://api.open-meteo.com/v1/forecast?latitude='+lats.join(',')+'&longitude='+lngs.join(',')+'&current_weather=true')
+  .then(function(res){return res.json();})
+  .then(function(j){
+   if(S.rolls[0]!==r)return;
+   var arr=Array.isArray(j)?j:[j],i=0;
+   $('#railRB').innerHTML=r.stops.map(function(st){
+    var w=arr[i]&&arr[i].current_weather;i++;
+    return '<div class="wx"><b>'+dname(st)+'</b><span>'+(w?(WXE[w.weathercode]||'🌡️')+' '+Math.round(w.temperature)+'°C':'—')+'</span></div>';
+   }).join('');
+  }).catch(function(){$('#railRB').innerHTML=r.stops.map(function(st){
+   var q=BYID[st.id];return '<div class="wx"><b>'+dname(st)+'</b><span>'+(q&&(q.p||q.e)?(q.p?fmt(q.p)+' hab':'')+(q.e?' '+fmt(q.e)+' m':''):'—')+'</span></div>';
+  }).join('');});
 }
 
 /* sorteo: se calcula y persiste de una vez; el reveal va slot por slot (suspense)
@@ -442,7 +515,7 @@ $('#shareBtn').addEventListener('click',function(){
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
-  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+fmt(r.ep)+' EP'+url;
+  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+VL.poem(r)+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}

@@ -105,6 +105,25 @@ function evalRoute(stops) {
  return rb;
 }
 
+/* poema del viaje: cada badge aporta una palabra al verso */
+var POEM_WORDS = {
+ 'Región Centro':'el centro','Región Occidente':'el occidente','Región Oriente':'el oriente',
+ 'Región Andes':'los andes','Región Llanos':'los llanos','Región Guayana':'la guayana','Región Insular':'la isla',
+ 'Con tilde':'acentos','Puerto':'mares','Santoral':'santos','Con agua':'ríos','Letra doble':'letras gemelas',
+ 'Pocas letras':'nombres breves','Nombre kilométrico':'nombres eternos','Monovocal':'vocales',
+ 'Espejo':'espejos','Diéresis':'trémulas','Compuesto':'dos apellidos','Con artículo':'artículos',
+ 'Letra rara':'equis','Palíndromo':'círculos','Costero':'la sal','Insular':'la isla',
+ 'Andino':'el páramo','Selvático':'la selva','Llanero':'el llano'};
+function poem(roll){
+ var words=[];
+ roll.stops.forEach(function(st){st.b.forEach(function(x){
+  var w=POEM_WORDS[x.n];if(w&&words.indexOf(w)<0)words.push(w);});});
+ var n1=stopsName(roll.stops[0]),n5=stopsName(roll.stops[roll.stops.length-1]);
+ var w1=words[0]||'tierra adentro',w2=words[1]||words[0]||'sin destino';
+ return 'De '+n1+' salió el azar,\npor '+w1+' y '+w2+' sin parar,\nhasta '+n5+' llegó a soñar.';
+}
+function stopsName(st){var p=st.id&&BYID[st.id];return p?displayName(p):st.n;}
+
 /* migración v1 -> v2 (in-place sobre el objeto cargado) */
 function migrate(o) {
  if (!o || o.v === 2 || !o.rolls) return o;
@@ -132,6 +151,6 @@ G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
  norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace,
- hav:hav, orderRoute:orderRoute, pickStops:pickStops, evalRoute:evalRoute, migrate:migrate
+ hav:hav, orderRoute:orderRoute, pickStops:pickStops, evalRoute:evalRoute, migrate:migrate, poem:poem
 };
 })(typeof window !== 'undefined' ? window : globalThis);

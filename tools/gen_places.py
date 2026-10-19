@@ -37,37 +37,37 @@ LLANOS = {'03', '05', '08', '12', '18'}
 # Lugares del catalogo viejo que no son feature class P (saltos, cayos, islas)
 # o que conviene fijar a mano. id sintetico >= 9_000_000.
 MANUAL = [
-    # id, nombre, estado, tipo, region, lat, lng, pop_est(tier), tags
-    (9000001, 'Salto Ángel', 'Bolívar', 'P', 'Gu', 5.9701, -62.5356, 0, ['selva']),
-    (9000002, 'Cayo Sombrero', 'Falcón', 'P', 'Oc', 11.8833, -69.2333, 0, ['costero', 'insular']),
-    (9000003, 'Isla de Coche', 'Nueva Esparta', 'P', 'In', 10.7833, -63.9500, 0, ['insular', 'costero']),
-    (9000004, 'Gran Roque', 'Dependencias Federales', 'P', 'In', 11.9500, -66.8500, 0, ['insular', 'costero']),
-    (9000005, 'Los Roques', 'Dependencias Federales', 'P', 'In', 11.8500, -66.7500, 0, ['insular', 'costero']),
-    (9000006, 'Canaima', 'Bolívar', 'P', 'Gu', 6.2378, -62.8486, 0, ['selva']),
-    (9000007, 'Choroní', 'Aragua', 'P', 'Ce', 10.5047, -67.6036, 0, ['costero']),
-    (9000008, 'Cuyagua', 'Aragua', 'P', 'Ce', 10.5264, -67.6419, 0, ['costero']),
-    (9000009, 'Chuao', 'Aragua', 'P', 'Ce', 10.4931, -67.6219, 0, ['costero']),
-    (9000010, 'Patanemo', 'Carabobo', 'P', 'Ce', 10.4225, -67.9125, 0, ['costero']),
-    (9000011, 'Tapipa', 'Miranda', 'P', 'Ce', 10.0667, -66.9167, 0, []),
-    (9000012, 'Jají', 'Mérida', 'P', 'An', 8.9578, -71.3197, 0, ['andino']),
-    (9000013, 'Los Nevados', 'Mérida', 'P', 'An', 8.4806, -71.0722, 0, ['andino']),
-    (9000014, 'Colonia Tovar', 'Aragua', 'P', 'Ce', 10.4133, -67.2939, 0, ['andino']),
-    (9000015, 'Mucuchíes', 'Mérida', 'P', 'An', 8.7503, -70.9200, 0, ['andino']),
-    (9000016, 'Pueblo Llano', 'Mérida', 'P', 'An', 8.9167, -70.6500, 0, ['andino']),
-    (9000017, 'Cata', 'Aragua', 'P', 'Ce', 10.4667, -67.7167, 0, ['costero']),
-    (9000018, 'Mochima', 'Sucre', 'P', 'Or', 10.3667, -64.3667, 0, ['costero']),
-    (9000019, 'Chichiriviche', 'Falcón', 'P', 'Oc', 10.9333, -68.2667, 0, ['costero']),
-    (9000020, 'Tucacas', 'Falcón', 'P', 'Oc', 10.7833, -68.3167, 0, ['costero']),
-    (9000021, 'Adícora', 'Falcón', 'P', 'Oc', 11.9500, -69.8000, 0, ['costero']),
-    (9000022, 'Macuto', 'La Guaira', 'P', 'Ce', 10.6000, -66.8833, 0, ['costero']),
-    (9000023, 'El Hatillo', 'Miranda', 'P', 'Ce', 10.4167, -66.8167, 0, []),
-    (9000024, 'Pampatar', 'Nueva Esparta', 'P', 'In', 10.9956, -63.7936, 0, ['insular', 'costero']),
-    (9000025, 'Juangriego', 'Nueva Esparta', 'P', 'In', 11.0778, -63.9486, 0, ['insular', 'costero']),
-    (9000026, 'Santa Elena de Uairén', 'Bolívar', 'C', 'Gu', 4.6019, -61.1078, 0, ['selva']),
-    (9000027, 'Boconó', 'Trujillo', 'C', 'An', 9.2403, -70.2700, 0, ['andino']),
-    (9000028, 'Güigüe', 'Carabobo', 'P', 'Ce', 10.0833, -67.7833, 0, []),
-    (9000029, 'Güiria', 'Sucre', 'P', 'Or', 10.5667, -62.3000, 0, ['costero']),
-    (9000030, 'Río Caribe', 'Sucre', 'P', 'Or', 10.6833, -63.1000, 0, ['costero']),
+    # id, nombre, estado, tipo, region, lat, lng, elev_m(aprox), tags
+    (9000001, 'Salto Ángel', 'Bolívar', 'P', 'Gu', 5.9701, -62.5356, 979, ['selva']),
+    (9000002, 'Cayo Sombrero', 'Falcón', 'P', 'Oc', 11.8833, -69.2333, 2, ['costero', 'insular']),
+    (9000003, 'Isla de Coche', 'Nueva Esparta', 'P', 'In', 10.7833, -63.9500, 10, ['insular', 'costero']),
+    (9000004, 'Gran Roque', 'Dependencias Federales', 'P', 'In', 11.9500, -66.8500, 5, ['insular', 'costero']),
+    (9000005, 'Los Roques', 'Dependencias Federales', 'P', 'In', 11.8500, -66.7500, 5, ['insular', 'costero']),
+    (9000006, 'Canaima', 'Bolívar', 'P', 'Gu', 6.2378, -62.8486, 450, ['selva']),
+    (9000007, 'Choroní', 'Aragua', 'P', 'Ce', 10.5047, -67.6036, 30, ['costero']),
+    (9000008, 'Cuyagua', 'Aragua', 'P', 'Ce', 10.5264, -67.6419, 10, ['costero']),
+    (9000009, 'Chuao', 'Aragua', 'P', 'Ce', 10.4931, -67.6219, 20, ['costero']),
+    (9000010, 'Patanemo', 'Carabobo', 'P', 'Ce', 10.4225, -67.9125, 5, ['costero']),
+    (9000011, 'Tapipa', 'Miranda', 'P', 'Ce', 10.0667, -66.9167, 400, []),
+    (9000012, 'Jají', 'Mérida', 'P', 'An', 8.9578, -71.3197, 1300, ['andino']),
+    (9000013, 'Los Nevados', 'Mérida', 'P', 'An', 8.4806, -71.0722, 2700, ['andino']),
+    (9000014, 'Colonia Tovar', 'Aragua', 'P', 'Ce', 10.4133, -67.2939, 1900, ['andino']),
+    (9000015, 'Mucuchíes', 'Mérida', 'P', 'An', 8.7503, -70.9200, 2980, ['andino']),
+    (9000016, 'Pueblo Llano', 'Mérida', 'P', 'An', 8.9167, -70.6500, 2300, ['andino']),
+    (9000017, 'Cata', 'Aragua', 'P', 'Ce', 10.4667, -67.7167, 30, ['costero']),
+    (9000018, 'Mochima', 'Sucre', 'P', 'Or', 10.3667, -64.3667, 20, ['costero']),
+    (9000019, 'Chichiriviche', 'Falcón', 'P', 'Oc', 10.9333, -68.2667, 5, ['costero']),
+    (9000020, 'Tucacas', 'Falcón', 'P', 'Oc', 10.7833, -68.3167, 10, ['costero']),
+    (9000021, 'Adícora', 'Falcón', 'P', 'Oc', 11.9500, -69.8000, 10, ['costero']),
+    (9000022, 'Macuto', 'La Guaira', 'P', 'Ce', 10.6000, -66.8833, 10, ['costero']),
+    (9000023, 'El Hatillo', 'Miranda', 'P', 'Ce', 10.4167, -66.8167, 1100, []),
+    (9000024, 'Pampatar', 'Nueva Esparta', 'P', 'In', 10.9956, -63.7936, 20, ['insular', 'costero']),
+    (9000025, 'Juangriego', 'Nueva Esparta', 'P', 'In', 11.0778, -63.9486, 10, ['insular', 'costero']),
+    (9000026, 'Santa Elena de Uairén', 'Bolívar', 'C', 'Gu', 4.6019, -61.1078, 860, ['selva']),
+    (9000027, 'Boconó', 'Trujillo', 'C', 'An', 9.2403, -70.2700, 1225, ['andino']),
+    (9000028, 'Güigüe', 'Carabobo', 'P', 'Ce', 10.0833, -67.7833, 660, []),
+    (9000029, 'Güiria', 'Sucre', 'P', 'Or', 10.5667, -62.3000, 15, ['costero']),
+    (9000030, 'Río Caribe', 'Sucre', 'P', 'Or', 10.6833, -63.1000, 15, ['costero']),
 ]
 
 # overrides por nombre para taggeo manual: nombre -> set(tags)
@@ -130,7 +130,8 @@ def main():
             if st in EXCLUDE:
                 continue
             places.append({'id': int(r[0]), 'n': st, 's': st, 't': 'E', 'r': reg, 'k': 0,
-                           'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4), 'g': []})
+                           'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4), 'g': [],
+                           'p': int(r[14] or 0), 'e': 0})
 
     # Localidades pobladas: todas las capitales (PPLA/PPLA2) + top poblacion
     def is_cand(r):
@@ -155,19 +156,19 @@ def main():
         g = tags_for(r[10], lat, dem)
         g = sorted(set(g) | OVERRIDES.get(nombre, set()))
         places.append({'id': int(r[0]), 'n': nombre, 's': st, 't': tipo, 'r': reg, 'k': pop_tier(pop),
-                       'la': round(lat, 4), 'ln': round(lng, 4), 'g': g})
+                       'la': round(lat, 4), 'ln': round(lng, 4), 'g': g, 'p': pop, 'e': dem})
         seen_names.add(nombre)
 
     # Manuales (lugares no-poblacion del catalogo viejo): si GeoNames ya trajo
     # el mismo nombre en el mismo estado, solo se fusionan los tags manuales.
     by_name_state = {(p['n'].lower(), p['s']): p for p in places}
-    for i, (pid, n, st, t, reg, la, ln, pop, g) in enumerate(MANUAL):
+    for i, (pid, n, st, t, reg, la, ln, elev, g) in enumerate(MANUAL):
         existing = by_name_state.get((n.lower(), st))
         if existing:
             existing['g'] = sorted(set(existing['g']) | set(g))
             continue
         places.append({'id': pid, 'n': n, 's': st, 't': t, 'r': reg,
-                       'k': 5 if i < 8 else 4, 'la': la, 'ln': ln, 'g': g})
+                       'k': 5 if i < 8 else 4, 'la': la, 'ln': ln, 'g': g, 'p': 0, 'e': elev})
 
     # garantizar nombres del catalogo viejo (migracion found)
     out = 'window.PLACES=' + json.dumps(places, ensure_ascii=False, separators=(',', ':')) + ';\n'
