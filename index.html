@@ -259,6 +259,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
 </div>
 
 <script src="places.js"></script>
+<script src="custom.js"></script>
 <script src="logic.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -564,7 +565,7 @@ $('#shareBtn').addEventListener('click',function(){
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
- var verso=(r.poem&&r.poem.length?VL.versify(r.poem):VL.poem(r));
+ var verso='*"'+((r.poem&&r.poem.length?VL.versify(r.poem):VL.poem(r)).replace(/\n/g,' / '))+'"*';
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
   (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}

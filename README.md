@@ -6,6 +6,7 @@ Un roadtrip por Venezuela al día. Juego estático de un solo HTML: cada día sa
 
 - `index.html` — el juego completo (sin build).
 - `places.js` — catálogo de lugares (`window.PLACES`), **generado**, no editar a mano.
+- `custom.js` — **el archivo para editar a mano**: palabras extra del poema por lugar (`window.PLACE_WORDS`). Una línea por lugar, ej. `'Choroní':['el cacao'],`.
 - `logic.js` — lógica pura (badges, distancias, orden de ruta, migración de save), compartida con los tests.
 - `test.html` / `test.js` — asserts sin framework: abre `test.html` o corre `node test.js`.
 - `tools/gen_places.py` — regenera `places.js` desde GeoNames.

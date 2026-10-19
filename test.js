@@ -1,6 +1,6 @@
 /* test.js — asserts de lógica pura. Corre en node (`node test.js`) y en test.html. */
 (function (G) {
-if (typeof window === 'undefined') { G.window = G; require('./places.js'); require('./logic.js'); }
+if (typeof window === 'undefined') { G.window = G; require('./places.js'); require('./custom.js'); require('./logic.js'); }
 var VL = G.VL, fails = 0, pass = 0;
 function ok(cond, name) {
  if (cond) { pass++; log('PASS ' + name); }
@@ -69,6 +69,8 @@ ok(pool.indexOf('acento') >= 0 && pool.indexOf('la sal') >= 0 && pool.indexOf('C
 ok(pool.indexOf('de') >= 0 && pool.indexOf(',') >= 0, 'pool trae conectores base + puntuación de badge');
 ok(VL.versify(['la','sal',',','la','playa','!']) === 'la sal, la playa!', 'versify pega la puntuación');
 ok(VL.POEM_MAX === 10, 'limite 10 palabras');
+var rollChoroni = {stops: [{id: 9000007, n: 'Choroní', s: 'Aragua', k: 5, t: 'P', ep: 0, b: []}], rb: []};
+ok(VL.wordPool(rollChoroni).indexOf('el cacao') >= 0, 'palabra custom de custom.js en el pool');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
