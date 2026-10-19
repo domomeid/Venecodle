@@ -105,7 +105,12 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .wx:last-child{border-bottom:0}
 .wx b{overflow-wrap:anywhere}
 .wx span{font-family:var(--f-mono);white-space:nowrap}
-.poem{font-family:var(--f-mono);font-size:12.5px;color:var(--muted);white-space:pre-line;border-left:3px solid var(--accent);padding:4px 10px;margin:0 0 14px}
+.poembox{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.poem{font-family:var(--f-mono);font-size:13px;white-space:pre-line;border-left:3px solid var(--accent);padding:4px 10px;color:var(--fg);min-height:2em}
+.poem .mini,.pool .mini{cursor:pointer;color:var(--fg);background:var(--surface);margin:2px 4px 2px 0}
+.poem .hint{color:var(--muted);font-size:12px}
+.pool{display:flex;flex-wrap:wrap;gap:2px}
+.pool .mini{color:var(--muted)}
 
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
@@ -187,7 +192,10 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
         <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
-        <div class="poem" id="tPoem" hidden></div>
+        <div class="poembox" id="tPoemBox" hidden>
+          <div class="poem" id="tPoem"></div>
+          <div class="pool" id="tPool"></div>
+        </div>
         <div class="stub"><span id="tProb">Pulsa el botón para arrancar tu roadtrip de hoy.</span><span id="tWait"></span></div>
       </div>
       <aside class="rail" id="railR" hidden>
@@ -286,7 +294,7 @@ function stopHtml(st,i){
 function showTicket(r){
  var name=$('#tName');
  if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;
-  $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';$('#tPoem').hidden=true;
+  $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';$('#tPoemBox').hidden=true;
   $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);renderExtras(null);return;}
  var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
  name.textContent=dname(st0);name.className='t-name'+(dname(st0).length>16?' long':'');
@@ -299,10 +307,24 @@ function showTicket(r){
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
  $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
- var pm=$('#tPoem');pm.textContent=VL.poem(r);pm.hidden=false;
+ renderPoem(r);
  $('#shareBtn').hidden=false;
  renderMap(r);
  renderExtras(r);
+}
+
+/* poema: pool de palabras del roll -> el usuario compone tocando chips */
+function renderPoem(r){
+ var box=$('#tPoemBox'),pe=$('#tPoem'),pl=$('#tPool');
+ if(!r){box.hidden=true;return;}
+ box.hidden=false;r.poem=r.poem||[];
+ var pool=VL.wordPool(r);
+ pe.innerHTML=r.poem.length
+  ? r.poem.map(function(w,i){return '<button class="mini" data-i="'+i+'">'+w+'</button>';}).join('')
+  : '<span class="hint">Sugerencia: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma la tuya tocando palabras ↓</span>';
+ pl.innerHTML=pool.map(function(w,i){
+  return r.poem.indexOf(w)<0?'<button class="mini" data-p="'+i+'">'+w+'</button>':'';
+ }).join('');
 }
 
 function stats(){
@@ -514,8 +536,9 @@ $('#shareBtn').addEventListener('click',function(){
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
+ var verso=(r.poem&&r.poem.length?r.poem.join(' '):VL.poem(r));
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
-  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+VL.poem(r)+'\n\n'+fmt(r.ep)+' EP'+url;
+  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
@@ -527,6 +550,16 @@ document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('
 });});
 $('#unl').checked=!!S.unl;
 $('#unl').addEventListener('change',function(e){S.unl=e.target.checked;save();updateBtn();});
+$('#tPool').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;
+ var r=todayRoll()||S.rolls[0];if(!r)return;
+ r.poem=r.poem||[];r.poem.push(VL.wordPool(r)[+b.dataset.p]);save();renderPoem(r);
+});
+$('#tPoem').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;
+ var r=todayRoll()||S.rolls[0];if(!r||!r.poem)return;
+ r.poem.splice(+b.dataset.i,1);save();renderPoem(r);
+});
 $('#simBtn').addEventListener('click',function(){maracaibo(true);});
 var delT=null;
 $('#delBtn').addEventListener('click',function(){
