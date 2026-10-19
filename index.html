@@ -54,9 +54,10 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .t-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chip{font-family:var(--f-mono);font-size:12px;border:1.5px solid currentColor;padding:1px 8px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .ep{font-family:var(--f-display);font-weight:800;font-size:26px;margin-left:auto;font-variant-numeric:tabular-nums}
-.badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-evenly;margin:14px 0 18px;min-height:30px}
-.badge{font-size:12.5px;border:1.5px solid;padding:2px 9px;background:var(--bg);font-weight:600}
+.badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-evenly;align-items:center;margin:14px 0 18px;min-height:30px}
+.badge{font-size:12.5px;border:1.5px solid;padding:2px 9px;background:var(--bg);font-weight:600;display:inline-flex;align-items:baseline}
 .badge i{font-style:normal;font-family:var(--f-mono);margin-left:6px}
+.mini{display:inline-block;border:1px solid;padding:0 5px;margin:2px 3px 2px 0;font-size:10.5px;font-family:var(--f-mono);font-weight:600;white-space:nowrap}
 .stub{border-top:2px dashed var(--fg);margin:0 -20px;padding:12px 20px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:66px}
 .rolling{animation:flick .12s steps(2) infinite}
 @keyframes flick{50%{opacity:.82}}
@@ -64,11 +65,11 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 
 /* paradas del roadtrip */
 .stops{list-style:none;margin:14px 0 6px;padding:0;display:flex;flex-direction:column}
-.stops li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line)}
+.stops li{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line)}
 .stops li:last-child{border-bottom:0}
 .stops .ord{font-family:var(--f-display);font-weight:900;font-size:22px;width:26px;text-align:center;flex:none}
 .stops .sn{font-weight:600;font-size:16px;overflow-wrap:anywhere}
-.stops .meta{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.stops .meta{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none;font-family:var(--f-mono);font-size:12px;color:var(--muted);align-self:center}
 .stops .b2{font-size:11.5px;color:var(--muted);display:block}
 
 /* slot machine: ventana fija con fade arriba/abajo, la cinta baja por translateY */
@@ -247,10 +248,13 @@ var rolling=false,map=null,routeLine=null,markers=[];
 function todayRoll(){var r=S.rolls[0];return r&&r.d===today()?r:null;}
 function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
 
+function epColor(ep){return ep>=40?'var(--r4)':ep>=30?'var(--r3)':ep>=20?'var(--r2)':ep>=15?'var(--r1)':'var(--r0)';}
+
 function stopHtml(st,i){
  var t=TIERS[st.k];
- return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span><span class="sn">'+dname(st)+
-  '</span><span class="b2">'+st.b.map(function(x){return x.n;}).join(' · ')+'</span></span>'+
+ var minis=st.b.map(function(x){return '<span class="mini" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
+ return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span style="min-width:0"><span class="sn">'+dname(st)+
+  '</span><span class="b2">'+minis+'</span></span>'+
   '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>+'+fmt(st.ep)+'</span></li>';
 }
 
@@ -266,7 +270,7 @@ function showTicket(r){
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
  $('#tStops').innerHTML=r.stops.map(stopHtml).join('');
  $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
-  var c=x.ep>=40?'var(--r4)':x.ep>=30?'var(--r3)':x.ep>=20?'var(--r2)':x.ep>=15?'var(--r1)':'var(--r0)';
+  var c=epColor(x.ep);
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
  $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
