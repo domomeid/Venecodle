@@ -54,9 +54,9 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .t-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chip{font-family:var(--f-mono);font-size:12px;border:1.5px solid currentColor;padding:1px 8px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .ep{font-family:var(--f-display);font-weight:800;font-size:26px;margin-left:auto;font-variant-numeric:tabular-nums}
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 18px;min-height:30px}
-.badge{font-size:12.5px;border:1px solid var(--line);padding:2px 9px;background:var(--bg)}
-.badge i{font-style:normal;font-family:var(--f-mono);color:var(--muted);margin-left:6px}
+.badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-evenly;margin:14px 0 18px;min-height:30px}
+.badge{font-size:12.5px;border:1.5px solid;padding:2px 9px;background:var(--bg);font-weight:600}
+.badge i{font-style:normal;font-family:var(--f-mono);margin-left:6px}
 .stub{border-top:2px dashed var(--fg);margin:0 -20px;padding:12px 20px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:66px}
 .rolling{animation:flick .12s steps(2) infinite}
 @keyframes flick{50%{opacity:.82}}
@@ -265,7 +265,9 @@ function showTicket(r){
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
  $('#tStops').innerHTML=r.stops.map(stopHtml).join('');
- $('#tBadges').innerHTML=(r.rb||[]).map(function(x){return '<span class="badge">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
+ $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
+  var c=x.ep>=40?'var(--r4)':x.ep>=30?'var(--r3)':x.ep>=20?'var(--r2)':x.ep>=15?'var(--r1)':'var(--r0)';
+  return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
  $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
  $('#shareBtn').hidden=false;
