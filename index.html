@@ -231,6 +231,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <li>Completa tu colección y mantén la racha.</li>
       </ol>
       <div class="scroll"><table id="rarTable"></table></div>
+      <div class="scroll"><table id="badTable"></table></div>
       <div class="scroll"><table id="rutTable"></table></div>
       <div class="warn">
         <p><b>Existe un lugar que no está en la colección.</b> Si te sale Maracaibo, tu cuenta se elimina al instante, sin confirmación y sin vuelta atrás. La probabilidad es de 1 entre 100 trillones (1 en 10<sup>20</sup>), más improbable que ganar la lotería dos veces seguidas.</p>
@@ -377,7 +378,10 @@ function renderRules(){
  var h='<tr><th>Rareza</th><th>Prob. del grupo</th><th>Lugares</th><th>Cada uno</th><th>EP base</th></tr>';
  TIERS.forEach(function(t,k){h+='<tr><td style="color:'+t.c+';font-weight:600">'+t.n+'</td><td>'+(t.p*100).toLocaleString('es-ES')+'%</td><td>'+BYTIER[k].length+'</td><td>1 en '+fmt(perPlace(k))+'</td><td>'+t.ep+'</td></tr>';});
  $('#rarTable').innerHTML=h;
- var tb='<tr><th>Badge</th><th>EP</th></tr>';
+ var bb='<tr><th>Badge de parada</th><th>Cuándo se gana</th><th>EP</th></tr>';
+ BADGES.forEach(function(x){bb+='<tr><td style="font-weight:600">'+x.n+'</td><td>'+x.d+'</td><td>'+x.ep+'</td></tr>';});
+ $('#badTable').innerHTML=bb;
+ var tb='<tr><th>Badge de ruta / terreno</th><th>EP</th></tr>';
  [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
   {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15}].forEach(function(x){
   tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});

@@ -28,20 +28,20 @@ function norm(s) {return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(
 function displayName(p) {return HOMONYMS[p.n] ? p.n + ' (' + p.s + ')' : p.n;}
 
 var BADGES = [
- {id:'tilde',n:'Con tilde',ep:10,f:function(p){return /[áéíóú]/i.test(p.n);}},
- {id:'puerto',n:'Puerto',ep:15,f:function(p){return /^puerto\b/i.test(p.n);}},
- {id:'santo',n:'Santoral',ep:15,f:function(p){return /^san(ta|to)?\b/i.test(p.n);}},
- {id:'agua',n:'Con agua',ep:15,f:function(p){return /puerto|cayo|isla|rio|salto|coche|roques/i.test(norm(p.n));}},
- {id:'doble',n:'Letra doble',ep:20,f:function(p){return /(.)\1/.test(norm(p.n).replace(/[^a-z]/g,''));}},
- {id:'corto',n:'Pocas letras',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length<=5;}},
- {id:'largo',n:'Nombre kilométrico',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length>=15;}},
- {id:'mono',n:'Monovocal',ep:35,f:function(p){var v=norm(p.n).replace(/[^aeiou]/g,'');return v.length>0&&new Set(v.split('')).size===1;}},
- {id:'espejo',n:'Espejo',ep:40,f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l[0]===l[l.length-1];}},
- {id:'dier',n:'Diéresis',ep:40,f:function(p){return /ü/i.test(p.n);}},
- {id:'comp',n:'Compuesto',ep:10,f:function(p){return /[ -]/.test(p.n.trim());}},
- {id:'arti',n:'Con artículo',ep:10,f:function(p){return /^(el|la|los|las)\b/i.test(p.n);}},
- {id:'rara',n:'Letra rara',ep:15,f:function(p){return /[qx]/i.test(norm(p.n));}},
- {id:'palin',n:'Palíndromo',ep:35,f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l.length>=4&&l===l.split('').reverse().join('');}}];
+ {id:'tilde',n:'Con tilde',ep:10,d:'El nombre lleva acento ortográfico',f:function(p){return /[áéíóú]/i.test(p.n);}},
+ {id:'puerto',n:'Puerto',ep:15,d:'Empieza por “Puerto”',f:function(p){return /^puerto\b/i.test(p.n);}},
+ {id:'santo',n:'Santoral',ep:15,d:'Empieza por San, Santa o Santo',f:function(p){return /^san(ta|to)?\b/i.test(p.n);}},
+ {id:'agua',n:'Con agua',ep:15,d:'Su nombre evoca el agua: puerto, cayo, isla, río, salto…',f:function(p){return /puerto|cayo|isla|rio|salto|coche|roques/i.test(norm(p.n));}},
+ {id:'doble',n:'Letra doble',ep:20,d:'Tiene una letra repetida dos veces seguidas',f:function(p){return /(.)\1/.test(norm(p.n).replace(/[^a-z]/g,''));}},
+ {id:'corto',n:'Pocas letras',ep:30,d:'Nombre de 5 letras o menos',f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length<=5;}},
+ {id:'largo',n:'Nombre kilométrico',ep:30,d:'Nombre de 15 letras o más',f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length>=15;}},
+ {id:'mono',n:'Monovocal',ep:35,d:'Usa una sola vocal distinta',f:function(p){var v=norm(p.n).replace(/[^aeiou]/g,'');return v.length>0&&new Set(v.split('')).size===1;}},
+ {id:'espejo',n:'Espejo',ep:40,d:'Empieza y termina con la misma letra',f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l[0]===l[l.length-1];}},
+ {id:'dier',n:'Diéresis',ep:40,d:'Tiene una ü con diéresis',f:function(p){return /ü/i.test(p.n);}},
+ {id:'comp',n:'Compuesto',ep:10,d:'Nombre de dos o más palabras',f:function(p){return /[ -]/.test(p.n.trim());}},
+ {id:'arti',n:'Con artículo',ep:10,d:'Empieza por El, La, Los o Las',f:function(p){return /^(el|la|los|las)\b/i.test(p.n);}},
+ {id:'rara',n:'Letra rara',ep:15,d:'Contiene Q o X',f:function(p){return /[qx]/i.test(norm(p.n));}},
+ {id:'palin',n:'Palíndromo',ep:35,d:'Se lee igual al derecho y al revés',f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l.length>=4&&l===l.split('').reverse().join('');}}];
 
 function evalPlace(p) {
  var b = [{n:'Región '+REG[p.r], ep:5}];
