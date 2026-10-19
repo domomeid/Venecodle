@@ -57,7 +57,7 @@ ok(Object.keys(S.found).length > 0, 'found acumula por id en 2 rutas');
 // poema del viaje
 var roll = {stops:[{id:ccs.id,b:[{n:'Región Centro',ep:5},{n:'Con tilde',ep:10}]},{id:val.id,b:[{n:'Costero',ep:15}]}]};
 var po = VL.poem(roll);
-ok(po.split('\n').length === 3 && po.indexOf('Caracas') >= 0 && po.indexOf('Valencia') >= 0 && /acentos|la sal/.test(po), 'poema 3 versos con extremos y palabras de badges');
+ok(po.split('\n').length === 3 && po.indexOf('Caracas') >= 0 && po.indexOf('Valencia') >= 0 && /acento|la sal/.test(po), 'poema 3 versos con extremos y palabras de badges');
 var pool = VL.wordPool(roll);
 ok(pool.indexOf('acento') >= 0 && pool.indexOf('la sal') >= 0 && pool.indexOf('Caracas') >= 0 && pool.length === new Set(pool).size, 'wordPool incluye palabras de badges + nombres, sin dups');
 
