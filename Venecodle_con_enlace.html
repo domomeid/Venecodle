@@ -1,0 +1,373 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Venecodle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: boleto de sorteo diario centrado, pestañas debajo (Hoy / Colección / Reglas). Estética de señal de carretera: amarillo vial sobre tinta azul. */
+:root{
+  --bg:#EDF1F3; --surface:#FFFFFF; --fg:#12202B; --muted:#5A6B77; --line:#CBD5DB;
+  --accent:#F2B705; --on-accent:#12202B; --danger:#C8281F; --on-danger:#FFFFFF;
+  --r0:#5A6B77; --r1:#1F7A4C; --r2:#1D6FB8; --r3:#7A3FC2; --r4:#B8590A; --r5:#A8197A;
+  --f-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1820; --surface:#16242E; --fg:#E7EEF2; --muted:#97A8B3; --line:#2A3C48;
+  --accent:#F6C21B; --on-accent:#0E1820; --danger:#FF5A4F; --on-danger:#1A0705;
+  --r0:#9DAEB9; --r1:#4FCB8A; --r2:#5DADF0; --r3:#B48BF0; --r4:#F29A47; --r5:#F27BC9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1820; --surface:#16242E; --fg:#E7EEF2; --muted:#97A8B3; --line:#2A3C48;
+  --accent:#F6C21B; --on-accent:#0E1820; --danger:#FF5A4F; --on-danger:#1A0705;
+  --r0:#9DAEB9; --r1:#4FCB8A; --r2:#5DADF0; --r3:#B48BF0; --r4:#F29A47; --r5:#F27BC9; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--f-display);text-wrap:balance}
+
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:3px solid var(--fg);padding-bottom:10px}
+.logo{font-size:clamp(40px,10vw,60px);font-weight:900;letter-spacing:.01em;line-height:.9;text-transform:uppercase}
+.logo span{background:var(--accent);color:var(--on-accent);padding:0 .14em;margin-left:.08em}
+.tag{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);padding:10px 12px;min-width:0}
+.stat b{display:block;font-family:var(--f-display);font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.stat small{font-family:var(--f-mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+nav{display:flex;gap:6px;border-bottom:1px solid var(--line)}
+nav button{background:none;border:0;border-bottom:4px solid transparent;padding:8px 12px;font-family:var(--f-display);font-weight:800;font-size:20px;text-transform:uppercase;color:var(--muted)}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+
+/* boleto */
+.ticket{position:relative;background:var(--surface);border:2px solid var(--fg);padding:18px 20px 0;overflow:hidden}
+.ticket::before,.ticket::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:var(--bg);border:2px solid var(--fg);top:calc(100% - 66px);margin-top:-11px}
+.ticket::before{left:-13px}.ticket::after{right:-13px}
+.t-top{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
+.t-name{font-size:clamp(44px,13vw,92px);font-weight:900;line-height:.95;text-transform:uppercase;margin:14px 0 6px;overflow-wrap:anywhere;min-height:1em}
+.t-name.idle{color:var(--line)}
+.t-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{font-family:var(--f-mono);font-size:12px;border:1.5px solid currentColor;padding:1px 8px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.ep{font-family:var(--f-display);font-weight:800;font-size:26px;margin-left:auto;font-variant-numeric:tabular-nums}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 18px;min-height:30px}
+.badge{font-size:12.5px;border:1px solid var(--line);padding:2px 9px;background:var(--bg)}
+.badge i{font-style:normal;font-family:var(--f-mono);color:var(--muted);margin-left:6px}
+.stub{border-top:2px dashed var(--fg);margin:0 -20px;padding:12px 20px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:66px}
+.rolling{animation:flick .12s steps(2) infinite}
+@keyframes flick{50%{opacity:.82}}
+@media (prefers-reduced-motion:reduce){.rolling{animation:none}}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:2px solid var(--fg);background:var(--surface);padding:10px 18px;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.03em}
+.btn.primary{background:var(--accent);color:var(--on-accent);flex:1 1 220px}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.small{font-size:16px;padding:6px 12px}
+.btn.danger{background:var(--danger);color:var(--on-danger);border-color:var(--danger)}
+.note{color:var(--muted);font-size:13px;margin:0}
+
+/* colección */
+.group{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.group h3{font-size:22px;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;border-bottom:2px solid currentColor;padding-bottom:2px}
+.group h3 span{font-family:var(--f-mono);font-size:13px;font-weight:400}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.cell{background:var(--surface);border:1px solid var(--line);padding:6px 9px;min-width:0;display:flex;justify-content:space-between;gap:6px;font-size:13.5px}
+.cell.lock{color:var(--muted);background:transparent;border-style:dashed}
+.cell em{font-style:normal;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hist li{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px}
+.hist span{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+
+/* reglas */
+.prose{display:flex;flex-direction:column;gap:14px;max-width:65ch}
+.prose h2{font-size:28px;text-transform:uppercase}
+.prose p,.prose ol{margin:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+th{font-family:var(--f-mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.warn{border:2px solid var(--danger);padding:12px 14px;background:var(--surface)}
+.warn b{color:var(--danger)}
+.settings{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+label.chk{display:flex;gap:10px;align-items:flex-start}
+label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)}
+
+/* Maracaibo */
+#wipe{position:fixed;inset:0;z-index:50;background:var(--danger);color:var(--on-danger);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px}
+#wipe .big{font-family:var(--f-display);font-weight:900;font-size:clamp(48px,16vw,150px);line-height:.9;text-transform:uppercase;overflow-wrap:anywhere}
+#wipe p{margin:0;font-size:18px;max-width:34ch}
+#wipe .bar{width:min(420px,80vw);height:10px;border:2px solid currentColor}
+#wipe .bar div{height:100%;background:currentColor;width:0}
+#wipe .btn{background:var(--on-danger);color:var(--danger);border-color:var(--on-danger)}
+#wipe.shake .big{animation:shake .25s linear infinite}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){#wipe.shake .big{animation:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1 class="logo">Vene<span>codle</span></h1>
+    <div class="tag">Un lugar de Venezuela al día</div>
+  </header>
+
+  <div class="stats" aria-live="polite">
+    <div class="stat"><b id="sEp">0</b><small>EP totales</small></div>
+    <div class="stat"><b id="sStreak">0</b><small>Racha (días)</small></div>
+    <div class="stat"><b id="sCol">0</b><small>Colección</small></div>
+  </div>
+
+  <nav role="tablist" aria-label="Secciones">
+    <button role="tab" id="tab-hoy" aria-selected="true" data-tab="hoy">Hoy</button>
+    <button role="tab" id="tab-col" aria-selected="false" data-tab="col">Colección</button>
+    <button role="tab" id="tab-reg" aria-selected="false" data-tab="reg">Reglas</button>
+  </nav>
+
+  <section id="hoy" aria-labelledby="tab-hoy">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="ticket" id="ticket">
+        <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
+        <div class="t-name idle" id="tName">? ? ?</div>
+        <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
+        <div class="badges" id="tBadges"></div>
+        <div class="stub"><span id="tProb">Pulsa el botón para sacar tu lugar de hoy.</span><span id="tWait"></span></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="rollBtn">Sacar mi lugar</button>
+        <button class="btn" id="shareBtn" hidden>Copiar resultado</button>
+      </div>
+      <p class="note" id="msg" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section id="col" hidden aria-labelledby="tab-col">
+    <div id="collection"></div>
+    <h3 style="font-size:22px;text-transform:uppercase;margin-bottom:6px">Últimos sorteos</h3>
+    <ul class="hist" id="hist"></ul>
+  </section>
+
+  <section id="reg" hidden aria-labelledby="tab-reg">
+    <div class="prose">
+      <h2>Cómo se juega</h2>
+      <ol style="padding-left:20px;display:flex;flex-direction:column;gap:4px">
+        <li>Cada día sacas un lugar al azar: un estado, una ciudad o un pueblo de Venezuela.</li>
+        <li>Ganas EP según lo raro que sea el lugar y las insignias que tenga su nombre (tilde, pocas letras, monovocal, región y más).</li>
+        <li>Completa tu colección y mantén la racha.</li>
+      </ol>
+      <div class="scroll"><table id="rarTable"></table></div>
+      <div class="warn">
+        <p><b>Existe un lugar que no está en la colección.</b> Si te sale Maracaibo, tu cuenta se elimina al instante, sin confirmación y sin vuelta atrás. La probabilidad es de 1 entre 100 trillones (1 en 10<sup>20</sup>), más improbable que ganar la lotería dos veces seguidas.</p>
+      </div>
+      <div class="settings">
+        <div class="actions">
+          <button class="btn small" id="simBtn">Simular Maracaibo (no borra nada)</button>
+          <button class="btn small" id="delBtn">Borrar mi cuenta</button>
+        </div>
+        <p class="note">Tu progreso se guarda solo en este navegador.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="wipe" role="alertdialog" aria-live="assertive" aria-labelledby="wTitle" hidden>
+  <div class="tag" id="wSim" style="color:inherit" hidden>Simulación, tu cuenta está a salvo</div>
+  <div class="big" id="wTitle">Maracaibo</div>
+  <p id="wText"></p>
+  <div class="bar" id="wBar" hidden><div id="wFill"></div></div>
+  <button class="btn" id="wBtn" hidden></button>
+</div>
+
+<script>
+(function(){
+var KEY='venecodle.v1';
+var TIERS=[
+ {n:'Común',p:.52,ep:10,c:'var(--r0)'},{n:'Poco común',p:.26,ep:25,c:'var(--r1)'},
+ {n:'Raro',p:.13,ep:60,c:'var(--r2)'},{n:'Épico',p:.06,ep:150,c:'var(--r3)'},
+ {n:'Anomalía',p:.025,ep:400,c:'var(--r4)'},{n:'Mítico',p:.005,ep:1000,c:'var(--r5)'}];
+var REG={Ce:'Centro',Oc:'Occidente',Or:'Oriente',An:'Andes',Ll:'Llanos',Gu:'Guayana',In:'Insular'};
+var TYPE={E:'Estado',C:'Ciudad',P:'Pueblo'};
+var RAW=[
+[0,'Caracas|C|Ce,Zulia|E|Oc,Miranda|E|Ce,Carabobo|E|Ce,Lara|E|Oc,Aragua|E|Ce,Valencia|C|Ce,Barquisimeto|C|Oc,Maracay|C|Ce,Distrito Capital|E|Ce,Anzoátegui|E|Or,Bolívar|E|Gu,Táchira|E|An,Mérida|E|An,Ciudad Guayana|C|Gu,Barcelona|C|Or,Maturín|C|Or,San Cristóbal|C|An'],
+[1,'Falcón|E|Oc,Monagas|E|Or,Nueva Esparta|E|In,Sucre|E|Or,Barinas|E|Ll,La Guaira|E|Ce,Portuguesa|E|Ll,Cumaná|C|Or,Puerto La Cruz|C|Or,Los Teques|C|Ce,Punto Fijo|C|Oc,Coro|C|Oc,Cabimas|C|Oc,Puerto Ordaz|C|Gu,Ciudad Bolívar|C|Gu,Guanare|C|Ll,Valera|C|An,Acarigua|C|Ll,Turmero|C|Ce,Cagua|C|Ce,Guarenas|C|Ce'],
+[2,'Guárico|E|Ll,Trujillo|E|An,Yaracuy|E|Oc,Cojedes|E|Ll,Porlamar|C|In,El Tigre|C|Or,Tucupita|C|Gu,San Fernando de Apure|C|Ll,San Felipe|C|Oc,San Carlos|C|Ll,Carúpano|C|Or,Ejido|C|An,Tovar|C|An,La Victoria|C|Ce,Calabozo|C|Ll,Valle de la Pascua|C|Ll,Ocumare del Tuy|C|Ce,El Vigía|C|An'],
+[3,'Apure|E|Ll,Amazonas|E|Gu,Delta Amacuro|E|Gu,Puerto Ayacucho|C|Gu,Tinaquillo|C|Ll,El Callao|C|Gu,Upata|C|Gu,Higuerote|C|Ce,Chichiriviche|P|Oc,Tucacas|P|Oc,Mochima|P|Or,Choroní|P|Ce,Macuto|P|Ce,Río Caribe|P|Or,Juangriego|P|In,Santa Elena de Uairén|C|Gu'],
+[4,'Colonia Tovar|P|Ce,Jají|P|An,Los Nevados|P|An,Mucuchíes|P|An,Pampatar|P|In,Adícora|P|Oc,Canaima|P|Gu,El Hatillo|P|Ce,Isla de Coche|P|In,Chuao|P|Ce,Patanemo|P|Ce,Güigüe|P|Ce,Güiria|P|Or,Boconó|C|An'],
+[5,'Los Roques|P|In,Gran Roque|P|In,Salto Ángel|P|Gu,Cayo Sombrero|P|Oc,Cuyagua|P|Ce,Tapipa|P|Ce,Pueblo Llano|P|An,Cata|P|Ce']];
+var PLACES=[],BYTIER=[[],[],[],[],[],[]],BYNAME={};
+RAW.forEach(function(g){g[1].split(',').forEach(function(s){var a=s.split('|');var p={n:a[0],t:a[1],r:a[2],k:g[0]};PLACES.push(p);BYTIER[g[0]].push(p);BYNAME[p.n]=p;});});
+
+function norm(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+var BADGES=[
+ {id:'tilde',n:'Con tilde',ep:10,f:function(p){return /[áéíóú]/i.test(p.n);}},
+ {id:'puerto',n:'Puerto',ep:15,f:function(p){return /^puerto\b/i.test(p.n);}},
+ {id:'santo',n:'Santoral',ep:15,f:function(p){return /^san(ta|to)?\b/i.test(p.n);}},
+ {id:'agua',n:'Con agua',ep:15,f:function(p){return /puerto|cayo|isla|rio|salto|coche|roques/i.test(norm(p.n));}},
+ {id:'doble',n:'Letra doble',ep:20,f:function(p){return /(.)\1/.test(norm(p.n).replace(/[^a-z]/g,''));}},
+ {id:'corto',n:'Pocas letras',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length<=5;}},
+ {id:'largo',n:'Nombre kilométrico',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length>=15;}},
+ {id:'mono',n:'Monovocal',ep:35,f:function(p){var v=norm(p.n).replace(/[^aeiou]/g,'');return v.length>0&&new Set(v.split('')).size===1;}},
+ {id:'espejo',n:'Espejo',ep:40,f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l[0]===l[l.length-1];}},
+ {id:'dier',n:'Diéresis',ep:40,f:function(p){return /ü/i.test(p.n);}}];
+function evalPlace(p){
+ var b=[{n:'Región '+REG[p.r],ep:5}];
+ BADGES.forEach(function(x){if(x.f(p))b.push({n:x.n,ep:x.ep});});
+ var ep=TIERS[p.k].ep;b.forEach(function(x){ep+=x.ep;});
+ return {b:b,ep:ep};
+}
+
+/* azar */
+function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}
+function isMaracaibo(){var a=new Uint32Array(4),x=0n,i;crypto.getRandomValues(a);for(i=0;i<4;i++)x=(x<<32n)|BigInt(a[i]);return x%(10n**20n)===0n;}
+function pickPlace(){var r=rnd(),c=0,k=0;for(;k<TIERS.length-1;k++){c+=TIERS[k].p;if(r<c)break;}var l=BYTIER[k];return l[Math.floor(rnd()*l.length)];}
+
+/* estado */
+function fresh(){return {rolls:[],found:{},ep:0,streak:0,last:null};}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.rolls)return o;}}catch(e){}return fresh();}
+var S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function pad(n){return n<10?'0'+n:''+n;}
+function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+function today(){return dkey(new Date());}
+function yesterday(){var d=new Date();d.setDate(d.getDate()-1);return dkey(d);}
+function fmt(n){return n.toLocaleString('es-ES');}
+function perPlace(k){return Math.round(BYTIER[k].length/TIERS[k].p);}
+
+var $=function(s){return document.querySelector(s);};
+var rolling=false;
+
+function todayRoll(){var r=S.rolls[0];return r&&r.d===today()?r:null;}
+
+function showTicket(r){
+ var name=$('#tName');
+ if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+  $('#tProb').textContent='Pulsa el botón para sacar tu lugar de hoy.';$('#shareBtn').hidden=true;return;}
+ var p=BYNAME[r.n],t=TIERS[r.t];
+ name.textContent=r.n;name.className='t-name';name.style.color='';
+ var c=$('#tTier');c.hidden=false;c.textContent=t.n;c.style.color=t.c;
+ var y=$('#tType');y.hidden=false;y.textContent=TYPE[p.t]+' · '+REG[p.r];
+ $('#tEp').textContent='+'+fmt(r.ep)+' EP';
+ $('#tBadges').innerHTML=r.b.map(function(x){return '<span class="badge">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
+ $('#tProb').textContent='Probabilidad: 1 entre '+fmt(perPlace(r.t));
+ $('#tDate').textContent=r.d.split('-').reverse().join('/');
+ $('#shareBtn').hidden=false;
+}
+
+function stats(){
+ $('#sEp').textContent=fmt(S.ep);$('#sStreak').textContent=S.streak;
+ $('#sCol').textContent=Object.keys(S.found).length+'/'+PLACES.length;
+ $('#tNum').textContent='Sorteo Nº '+(S.rolls.length+(todayRoll()?0:1));
+ $('#tDate').textContent=today().split('-').reverse().join('/');
+}
+
+function updateBtn(){
+ var b=$('#rollBtn'),done=!!todayRoll();
+ b.disabled=done||rolling;
+ b.textContent=done?'Ya sacaste el de hoy':'Sacar mi lugar';
+ var w=$('#tWait');
+ if(done){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),s=Math.floor((m-n)/1000);
+  w.textContent='Próximo sorteo en '+pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60);}
+ else w.textContent='';
+}
+
+function renderCollection(){
+ var out='';
+ TIERS.forEach(function(t,k){
+  var list=BYTIER[k].slice().sort(function(a,b){return a.n.localeCompare(b.n,'es');});
+  var got=list.filter(function(p){return S.found[p.n];}).length;
+  out+='<div class="group" style="color:'+t.c+'"><h3>'+t.n+'<span>'+got+'/'+list.length+'</span></h3><div class="grid">';
+  list.forEach(function(p){var c=S.found[p.n];
+   out+=c?'<div class="cell" style="color:var(--fg)"><span>'+p.n+'</span><em>x'+c+'</em></div>':'<div class="cell lock"><span>? ? ?</span><em>'+TYPE[p.t]+'</em></div>';});
+  out+='</div></div>';});
+ $('#collection').innerHTML=out;
+ $('#hist').innerHTML=S.rolls.length?S.rolls.slice(0,10).map(function(r){return '<li><strong>'+r.n+'</strong><span>'+TIERS[r.t].n+' · +'+fmt(r.ep)+' EP · '+r.d.split('-').reverse().join('/')+'</span></li>';}).join(''):'<li><span>Todavía no has sacado ningún lugar.</span></li>';
+}
+
+function renderRules(){
+ var h='<tr><th>Rareza</th><th>Prob. del grupo</th><th>Lugares</th><th>Cada uno</th><th>EP base</th></tr>';
+ TIERS.forEach(function(t,k){h+='<tr><td style="color:'+t.c+';font-weight:600">'+t.n+'</td><td>'+(t.p*100).toLocaleString('es-ES')+'%</td><td>'+BYTIER[k].length+'</td><td>1 en '+fmt(perPlace(k))+'</td><td>'+t.ep+'</td></tr>';});
+ $('#rarTable').innerHTML=h;
+}
+
+/* sorteo */
+function doRoll(){
+ if(rolling)return;
+ if(todayRoll())return;
+ rolling=true;updateBtn();$('#msg').textContent='';
+ if(isMaracaibo()){maracaibo(false);rolling=false;return;}
+ var p=pickPlace(),res=evalPlace(p);
+ var name=$('#tName');name.className='t-name rolling';
+ $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+ var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ var steps=reduce?0:22,i=0;
+ function tick(){
+  if(i<steps){name.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;i++;setTimeout(tick,60+i*7);return;}
+  finish();
+ }
+ function finish(){
+  var d=today();
+  S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
+  S.last=d;S.ep+=res.ep;S.found[p.n]=(S.found[p.n]||0)+1;
+  S.rolls.unshift({d:d,n:p.n,t:p.k,ep:res.ep,b:res.b});S.rolls=S.rolls.slice(0,60);
+  save();rolling=false;showTicket(S.rolls[0]);stats();updateBtn();renderCollection();
+  if(p.k>=3)$('#msg').textContent=TIERS[p.k].n+'. Esto no sale todos los días.';
+ }
+ tick();
+}
+
+/* Maracaibo */
+var wTimers=[];
+function maracaibo(sim){
+ var w=$('#wipe'),lost={n:Object.keys(S.found).length,ep:S.ep,s:S.streak};
+ wTimers.forEach(clearTimeout);wTimers=[];
+ if(!sim){try{localStorage.removeItem(KEY);}catch(e){}}
+ w.hidden=false;w.classList.add('shake');
+ $('#wSim').hidden=!sim;$('#wTitle').textContent='Maracaibo';$('#wText').textContent='';$('#wBar').hidden=true;$('#wBtn').hidden=true;
+ $('#wFill').style.transition='none';$('#wFill').style.width='0';
+ wTimers.push(setTimeout(function(){
+  $('#wTitle').textContent='Cuenta eliminada';w.classList.remove('shake');
+  $('#wText').textContent='Se fueron '+lost.n+' lugares, '+fmt(lost.ep)+' EP y una racha de '+lost.s+' días. No hay vuelta atrás.';
+  $('#wBar').hidden=false;
+  var f=$('#wFill');void f.offsetWidth;f.style.transition='width 1.4s linear';f.style.width='100%';
+  wTimers.push(setTimeout(function(){
+   var b=$('#wBtn');b.hidden=false;b.textContent=sim?'Cerrar simulación':'Empezar de cero';b.focus();
+   b.onclick=function(){w.hidden=true;if(!sim){S=fresh();}showTicket(null);stats();updateBtn();renderCollection();};
+  },1500));
+ },2200));
+}
+
+/* eventos */
+$('#rollBtn').addEventListener('click',doRoll);
+$('#shareBtn').addEventListener('click',function(){
+ var r=todayRoll()||S.rolls[0];if(!r)return;
+ var SQ=['⬜','🟩','🟦','🟪','🟧','🟥'];
+ function bsq(ep){return ep>=40?SQ[4]:ep>=35?SQ[3]:ep>=30?SQ[2]:ep>=15?SQ[1]:SQ[0];}
+ var EMO={'Con tilde':'✍️','Puerto':'⚓','Santoral':'⛪','Con agua':'🌊','Letra doble':'👯','Pocas letras':'🤏','Nombre kilométrico':'📏','Monovocal':'🅰️','Espejo':'🪞','Diéresis':'✨'};
+ var bs=r.b.slice().sort(function(a,b){return b.ep-a.ep;});
+ var lines=bs.slice(0,3).map(function(x){return bsq(x.ep)+' '+(EMO[x.n]||'🧭')+' '+x.n;});
+ var more=bs.length-3;
+ var txt='Venecodle 🇻🇪 '+r.n+'\n\n'+SQ[r.t]+' '+TIERS[r.t].n.toUpperCase()+'\n\n'+lines.join('\n')+(more>0?'\n+'+more+' más':'')+'\n\n'+fmt(r.ep)+' EP\n\nhttps://domomeid.github.io/Venecodle/';
+ function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
+ function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
+ try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
+});
+document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('click',function(){
+ document.querySelectorAll('nav button').forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false');});
+ ['hoy','col','reg'].forEach(function(id){$('#'+id).hidden=(id!==b.dataset.tab);});
+});});
+$('#simBtn').addEventListener('click',function(){maracaibo(true);});
+var delT=null;
+$('#delBtn').addEventListener('click',function(){
+ var b=$('#delBtn');
+ if(delT){clearTimeout(delT);delT=null;try{localStorage.removeItem(KEY);}catch(e){}S=fresh();$('#unl').checked=false;b.textContent='Borrar mi cuenta';showTicket(null);stats();updateBtn();renderCollection();return;}
+ b.textContent='Confirmar: se borra todo';b.classList.add('danger');
+ delT=setTimeout(function(){delT=null;b.textContent='Borrar mi cuenta';b.classList.remove('danger');},4000);
+});
+
+showTicket(todayRoll());stats();updateBtn();renderCollection();renderRules();
+setInterval(function(){if(document.visibilityState==='visible'){stats();updateBtn();}},1000);
+})();
+</script>
+
+</body></html>
