@@ -146,6 +146,8 @@ function wordPool(roll){
  roll.stops.forEach(function(st){
   st.b.forEach(function(x){(POEM_WORDS[x.n]||[]).forEach(add);});
   add(stopsName(st));
+  var p=st.id&&BYID[st.id];
+  if(p&&G.PLACE_WORDS&&G.PLACE_WORDS[p.n])(G.PLACE_WORDS[p.n]).forEach(add);
  });
  (roll.rb||[]).forEach(function(x){
   if(/km recorridos/.test(x.n))['kilómetros','leguas','asfalto'].forEach(add);
