@@ -2,6 +2,7 @@
 <title>Venecodle</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
 /* Layout: boleto de sorteo diario centrado, pestañas debajo (Hoy / Colección / Reglas). Estética de señal de carretera: amarillo vial sobre tinta azul. */
 :root{
@@ -61,6 +62,19 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 @keyframes flick{50%{opacity:.82}}
 @media (prefers-reduced-motion:reduce){.rolling{animation:none}}
 
+/* paradas del roadtrip */
+.stops{list-style:none;margin:14px 0 6px;padding:0;display:flex;flex-direction:column}
+.stops li{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line)}
+.stops li:last-child{border-bottom:0}
+.stops .ord{font-family:var(--f-display);font-weight:900;font-size:22px;width:26px;text-align:center;flex:none}
+.stops .sn{font-weight:600;font-size:16px;overflow-wrap:anywhere}
+.stops .meta{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.stops .b2{font-size:11.5px;color:var(--muted);display:block}
+
+#map{height:320px;border:2px solid var(--fg);background:var(--surface)}
+#map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.leaflet-container{font-family:var(--f-body)}
+
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn{border:2px solid var(--fg);background:var(--surface);padding:10px 18px;font-family:var(--f-display);font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:.03em}
 .btn.primary{background:var(--accent);color:var(--on-accent);flex:1 1 220px}
@@ -80,6 +94,7 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .hist li{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px}
 .hist span{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.hist .route{overflow-wrap:anywhere}
 
 /* reglas */
 .prose{display:flex;flex-direction:column;gap:14px;max-width:65ch}
@@ -110,7 +125,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
 <div class="wrap">
   <header>
     <h1 class="logo">Vene<span>codle</span></h1>
-    <div class="tag">Un lugar de Venezuela al día</div>
+    <div class="tag">Un roadtrip por Venezuela al día</div>
   </header>
 
   <div class="stats" aria-live="polite">
@@ -131,11 +146,13 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
         <div class="t-name idle" id="tName">? ? ?</div>
         <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
+        <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
-        <div class="stub"><span id="tProb">Pulsa el botón para sacar tu lugar de hoy.</span><span id="tWait"></span></div>
+        <div class="stub"><span id="tProb">Pulsa el botón para arrancar tu roadtrip de hoy.</span><span id="tWait"></span></div>
       </div>
+      <div id="map" hidden></div>
       <div class="actions">
-        <button class="btn primary" id="rollBtn">Sacar mi lugar</button>
+        <button class="btn primary" id="rollBtn">Arrancar roadtrip</button>
         <button class="btn" id="shareBtn" hidden>Copiar resultado</button>
       </div>
       <p class="note" id="msg" aria-live="polite"></p>
@@ -152,15 +169,17 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
     <div class="prose">
       <h2>Cómo se juega</h2>
       <ol style="padding-left:20px;display:flex;flex-direction:column;gap:4px">
-        <li>Cada día sacas un lugar al azar: un estado, una ciudad o un pueblo de Venezuela.</li>
-        <li>Ganas EP según lo raro que sea el lugar y las insignias que tenga su nombre (tilde, pocas letras, monovocal, región y más).</li>
+        <li>Cada día arrancas un roadtrip de 5 paradas por Venezuela: estados, ciudades y pueblos.</li>
+        <li>Ganas EP según lo raro que sea cada parada, sus insignias y las de la ruta completa (kilómetros, regiones, terrenos).</li>
         <li>Completa tu colección y mantén la racha.</li>
       </ol>
       <div class="scroll"><table id="rarTable"></table></div>
+      <div class="scroll"><table id="rutTable"></table></div>
       <div class="warn">
         <p><b>Existe un lugar que no está en la colección.</b> Si te sale Maracaibo, tu cuenta se elimina al instante, sin confirmación y sin vuelta atrás. La probabilidad es de 1 entre 100 trillones (1 en 10<sup>20</sup>), más improbable que ganar la lotería dos veces seguidas.</p>
       </div>
       <div class="settings">
+        <label class="chk"><input type="checkbox" id="unl"><span>Modo prueba: sorteos ilimitados (para directos y pruebas)</span></label>
         <div class="actions">
           <button class="btn small" id="simBtn">Simular Maracaibo (no borra nada)</button>
           <button class="btn small" id="delBtn">Borrar mi cuenta</button>
@@ -179,52 +198,23 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
   <button class="btn" id="wBtn" hidden></button>
 </div>
 
+<script src="places.js"></script>
+<script src="logic.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 (function(){
 var KEY='venecodle.v1';
-var TIERS=[
- {n:'Común',p:.52,ep:10,c:'var(--r0)'},{n:'Poco común',p:.26,ep:25,c:'var(--r1)'},
- {n:'Raro',p:.13,ep:60,c:'var(--r2)'},{n:'Épico',p:.06,ep:150,c:'var(--r3)'},
- {n:'Anomalía',p:.025,ep:400,c:'var(--r4)'},{n:'Mítico',p:.005,ep:1000,c:'var(--r5)'}];
-var REG={Ce:'Centro',Oc:'Occidente',Or:'Oriente',An:'Andes',Ll:'Llanos',Gu:'Guayana',In:'Insular'};
-var TYPE={E:'Estado',C:'Ciudad',P:'Pueblo'};
-var RAW=[
-[0,'Caracas|C|Ce,Zulia|E|Oc,Miranda|E|Ce,Carabobo|E|Ce,Lara|E|Oc,Aragua|E|Ce,Valencia|C|Ce,Barquisimeto|C|Oc,Maracay|C|Ce,Distrito Capital|E|Ce,Anzoátegui|E|Or,Bolívar|E|Gu,Táchira|E|An,Mérida|E|An,Ciudad Guayana|C|Gu,Barcelona|C|Or,Maturín|C|Or,San Cristóbal|C|An'],
-[1,'Falcón|E|Oc,Monagas|E|Or,Nueva Esparta|E|In,Sucre|E|Or,Barinas|E|Ll,La Guaira|E|Ce,Portuguesa|E|Ll,Cumaná|C|Or,Puerto La Cruz|C|Or,Los Teques|C|Ce,Punto Fijo|C|Oc,Coro|C|Oc,Cabimas|C|Oc,Puerto Ordaz|C|Gu,Ciudad Bolívar|C|Gu,Guanare|C|Ll,Valera|C|An,Acarigua|C|Ll,Turmero|C|Ce,Cagua|C|Ce,Guarenas|C|Ce'],
-[2,'Guárico|E|Ll,Trujillo|E|An,Yaracuy|E|Oc,Cojedes|E|Ll,Porlamar|C|In,El Tigre|C|Or,Tucupita|C|Gu,San Fernando de Apure|C|Ll,San Felipe|C|Oc,San Carlos|C|Ll,Carúpano|C|Or,Ejido|C|An,Tovar|C|An,La Victoria|C|Ce,Calabozo|C|Ll,Valle de la Pascua|C|Ll,Ocumare del Tuy|C|Ce,El Vigía|C|An'],
-[3,'Apure|E|Ll,Amazonas|E|Gu,Delta Amacuro|E|Gu,Puerto Ayacucho|C|Gu,Tinaquillo|C|Ll,El Callao|C|Gu,Upata|C|Gu,Higuerote|C|Ce,Chichiriviche|P|Oc,Tucacas|P|Oc,Mochima|P|Or,Choroní|P|Ce,Macuto|P|Ce,Río Caribe|P|Or,Juangriego|P|In,Santa Elena de Uairén|C|Gu'],
-[4,'Colonia Tovar|P|Ce,Jají|P|An,Los Nevados|P|An,Mucuchíes|P|An,Pampatar|P|In,Adícora|P|Oc,Canaima|P|Gu,El Hatillo|P|Ce,Isla de Coche|P|In,Chuao|P|Ce,Patanemo|P|Ce,Güigüe|P|Ce,Güiria|P|Or,Boconó|C|An'],
-[5,'Los Roques|P|In,Gran Roque|P|In,Salto Ángel|P|Gu,Cayo Sombrero|P|Oc,Cuyagua|P|Ce,Tapipa|P|Ce,Pueblo Llano|P|An,Cata|P|Ce']];
-var PLACES=[],BYTIER=[[],[],[],[],[],[]],BYNAME={};
-RAW.forEach(function(g){g[1].split(',').forEach(function(s){var a=s.split('|');var p={n:a[0],t:a[1],r:a[2],k:g[0]};PLACES.push(p);BYTIER[g[0]].push(p);BYNAME[p.n]=p;});});
-
-function norm(s){return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
-var BADGES=[
- {id:'tilde',n:'Con tilde',ep:10,f:function(p){return /[áéíóú]/i.test(p.n);}},
- {id:'puerto',n:'Puerto',ep:15,f:function(p){return /^puerto\b/i.test(p.n);}},
- {id:'santo',n:'Santoral',ep:15,f:function(p){return /^san(ta|to)?\b/i.test(p.n);}},
- {id:'agua',n:'Con agua',ep:15,f:function(p){return /puerto|cayo|isla|rio|salto|coche|roques/i.test(norm(p.n));}},
- {id:'doble',n:'Letra doble',ep:20,f:function(p){return /(.)\1/.test(norm(p.n).replace(/[^a-z]/g,''));}},
- {id:'corto',n:'Pocas letras',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length<=5;}},
- {id:'largo',n:'Nombre kilométrico',ep:30,f:function(p){return norm(p.n).replace(/[^a-z]/g,'').length>=15;}},
- {id:'mono',n:'Monovocal',ep:35,f:function(p){var v=norm(p.n).replace(/[^aeiou]/g,'');return v.length>0&&new Set(v.split('')).size===1;}},
- {id:'espejo',n:'Espejo',ep:40,f:function(p){var l=norm(p.n).replace(/[^a-z]/g,'');return l[0]===l[l.length-1];}},
- {id:'dier',n:'Diéresis',ep:40,f:function(p){return /ü/i.test(p.n);}}];
-function evalPlace(p){
- var b=[{n:'Región '+REG[p.r],ep:5}];
- BADGES.forEach(function(x){if(x.f(p))b.push({n:x.n,ep:x.ep});});
- var ep=TIERS[p.k].ep;b.forEach(function(x){ep+=x.ep;});
- return {b:b,ep:ep};
-}
+var TIERS=VL.TIERS,REG=VL.REG,TYPE=VL.TYPE,TERRAIN=VL.TERRAIN;
+var PLACES=VL.PLACES,BYTIER=VL.BYTIER,BYID=VL.BYID,HOMONYMS=VL.HOMONYMS;
+var NPARADAS=5;
 
 /* azar */
 function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}
 function isMaracaibo(){var a=new Uint32Array(4),x=0n,i;crypto.getRandomValues(a);for(i=0;i<4;i++)x=(x<<32n)|BigInt(a[i]);return x%(10n**20n)===0n;}
-function pickPlace(){var r=rnd(),c=0,k=0;for(;k<TIERS.length-1;k++){c+=TIERS[k].p;if(r<c)break;}var l=BYTIER[k];return l[Math.floor(rnd()*l.length)];}
 
 /* estado */
-function fresh(){return {rolls:[],found:{},ep:0,streak:0,last:null};}
-function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.rolls)return o;}}catch(e){}return fresh();}
+function fresh(){return {v:2,rolls:[],found:{},ep:0,streak:0,last:null,unl:false};}
+function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.rolls)return VL.migrate(o);}}catch(e){}return fresh();}
 var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 function pad(n){return n<10?'0'+n:''+n;}
@@ -235,23 +225,34 @@ function fmt(n){return n.toLocaleString('es-ES');}
 function perPlace(k){return Math.round(BYTIER[k].length/TIERS[k].p);}
 
 var $=function(s){return document.querySelector(s);};
-var rolling=false;
+var rolling=false,map=null,routeLine=null,markers=[];
 
 function todayRoll(){var r=S.rolls[0];return r&&r.d===today()?r:null;}
+function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
+
+function stopHtml(st,i){
+ var t=TIERS[st.k];
+ return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span><span class="sn">'+dname(st)+
+  '</span><span class="b2">'+st.b.map(function(x){return x.n;}).join(' · ')+'</span></span>'+
+  '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>+'+fmt(st.ep)+'</span></li>';
+}
 
 function showTicket(r){
  var name=$('#tName');
- if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
-  $('#tProb').textContent='Pulsa el botón para sacar tu lugar de hoy.';$('#shareBtn').hidden=true;return;}
- var p=BYNAME[r.n],t=TIERS[r.t];
- name.textContent=r.n;name.className='t-name';name.style.color='';
- var c=$('#tTier');c.hidden=false;c.textContent=t.n;c.style.color=t.c;
- var y=$('#tType');y.hidden=false;y.textContent=TYPE[p.t]+' · '+REG[p.r];
+ if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;
+  $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';
+  $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);return;}
+ var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
+ name.textContent=dname(st0);name.className='t-name';
+ var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
+ var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
- $('#tBadges').innerHTML=r.b.map(function(x){return '<span class="badge">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
- $('#tProb').textContent='Probabilidad: 1 entre '+fmt(perPlace(r.t));
+ $('#tStops').innerHTML=r.stops.map(stopHtml).join('');
+ $('#tBadges').innerHTML=(r.rb||[]).map(function(x){return '<span class="badge">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
+ $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
  $('#shareBtn').hidden=false;
+ renderMap(r);
 }
 
 function stats(){
@@ -262,9 +263,9 @@ function stats(){
 }
 
 function updateBtn(){
- var b=$('#rollBtn'),done=!!todayRoll();
+ var b=$('#rollBtn'),done=!!todayRoll()&&!S.unl;
  b.disabled=done||rolling;
- b.textContent=done?'Ya sacaste el de hoy':'Sacar mi lugar';
+ b.textContent=done?'Ya rodaste hoy':(S.unl&&todayRoll()?'Otro roadtrip (modo prueba)':'Arrancar roadtrip');
  var w=$('#tWait');
  if(done){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),s=Math.floor((m-n)/1000);
   w.textContent='Próximo sorteo en '+pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60);}
@@ -275,30 +276,61 @@ function renderCollection(){
  var out='';
  TIERS.forEach(function(t,k){
   var list=BYTIER[k].slice().sort(function(a,b){return a.n.localeCompare(b.n,'es');});
-  var got=list.filter(function(p){return S.found[p.n];}).length;
+  var got=list.filter(function(p){return S.found[p.id];}).length;
   out+='<div class="group" style="color:'+t.c+'"><h3>'+t.n+'<span>'+got+'/'+list.length+'</span></h3><div class="grid">';
-  list.forEach(function(p){var c=S.found[p.n];
-   out+=c?'<div class="cell" style="color:var(--fg)"><span>'+p.n+'</span><em>x'+c+'</em></div>':'<div class="cell lock"><span>? ? ?</span><em>'+TYPE[p.t]+'</em></div>';});
+  list.forEach(function(p){var c=S.found[p.id];
+   out+=c?'<div class="cell" style="color:var(--fg)"><span>'+VL.displayName(p)+'</span><em>x'+c+'</em></div>':'<div class="cell lock"><span>? ? ?</span><em>'+TYPE[p.t]+'</em></div>';});
   out+='</div></div>';});
  $('#collection').innerHTML=out;
- $('#hist').innerHTML=S.rolls.length?S.rolls.slice(0,10).map(function(r){return '<li><strong>'+r.n+'</strong><span>'+TIERS[r.t].n+' · +'+fmt(r.ep)+' EP · '+r.d.split('-').reverse().join('/')+'</span></li>';}).join(''):'<li><span>Todavía no has sacado ningún lugar.</span></li>';
+ $('#hist').innerHTML=S.rolls.length?S.rolls.slice(0,10).map(function(r){
+  return '<li><strong class="route">'+r.stops.map(dname).join(' → ')+'</strong><span>+'+fmt(r.ep)+' EP · '+r.d.split('-').reverse().join('/')+'</span></li>';
+ }).join(''):'<li><span>Todavía no has arrancado ningún roadtrip.</span></li>';
 }
 
 function renderRules(){
  var h='<tr><th>Rareza</th><th>Prob. del grupo</th><th>Lugares</th><th>Cada uno</th><th>EP base</th></tr>';
  TIERS.forEach(function(t,k){h+='<tr><td style="color:'+t.c+';font-weight:600">'+t.n+'</td><td>'+(t.p*100).toLocaleString('es-ES')+'%</td><td>'+BYTIER[k].length+'</td><td>1 en '+fmt(perPlace(k))+'</td><td>'+t.ep+'</td></tr>';});
  $('#rarTable').innerHTML=h;
+ var tb='<tr><th>Badge</th><th>EP</th></tr>';
+ [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
+  {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15}].forEach(function(x){
+  tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});
+ Object.keys(TERRAIN).forEach(function(g){tb+='<tr><td>'+TERRAIN[g].n+' (terreno)</td><td>'+TERRAIN[g].ep+'</td></tr>';});
+ $('#rutTable').innerHTML=tb;
+}
+
+/* mapa */
+function renderMap(r){
+ var el=$('#map');
+ if(typeof L==='undefined'){el.hidden=true;return;}
+ try{
+  if(!r){el.hidden=true;return;}
+  el.hidden=false;
+  if(!map){map=L.map('map',{scrollWheelZoom:false});L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'&copy; OpenStreetMap'}).addTo(map);}
+  markers.forEach(function(m){map.removeLayer(m);});markers=[];
+  if(routeLine)map.removeLayer(routeLine);
+  var pts=r.stops.map(function(st,i){
+   var p=st.id&&BYID[st.id];if(!p)return null;
+   var t=TIERS[st.k];
+   var m=L.marker([p.la,p.ln],{icon:L.divIcon({className:'',html:'<div class="mk" style="background:'+t.c+'">'+(i+1)+'</div>',iconSize:[26,26],iconAnchor:[13,13]})}).addTo(map);
+   m.bindPopup('<b>'+VL.displayName(p)+'</b><br>'+t.n+' · +'+fmt(st.ep)+' EP');
+   markers.push(m);return [p.la,p.ln];
+  }).filter(Boolean);
+  if(pts.length>1)routeLine=L.polyline(pts,{color:'#F2B705',weight:4,dashArray:'8 6'}).addTo(map);
+  if(pts.length)map.fitBounds(pts,{padding:[24,24]});
+  setTimeout(function(){if(map)map.invalidateSize();},80);
+ }catch(e){el.hidden=true;}
 }
 
 /* sorteo */
 function doRoll(){
  if(rolling)return;
- if(todayRoll())return;
+ if(todayRoll()&&!S.unl)return;
  rolling=true;updateBtn();$('#msg').textContent='';
  if(isMaracaibo()){maracaibo(false);rolling=false;return;}
- var p=pickPlace(),res=evalPlace(p);
+ var picks=VL.pickStops(NPARADAS,rnd);
  var name=$('#tName');name.className='t-name rolling';
- $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+ $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  var steps=reduce?0:22,i=0;
  function tick(){
@@ -306,12 +338,17 @@ function doRoll(){
   finish();
  }
  function finish(){
-  var d=today();
+  var ordered=VL.orderRoute(picks);
+  var stops=ordered.map(function(p){var res=VL.evalPlace(p);return {id:p.id,n:p.n,s:p.s,k:p.k,t:p.t,ep:res.ep,b:res.b};});
+  var rb=VL.evalRoute(stops);
+  var d=today(),ep=stops.reduce(function(a,s){return a+s.ep;},0)+rb.reduce(function(a,x){return a+x.ep;},0);
   S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
-  S.last=d;S.ep+=res.ep;S.found[p.n]=(S.found[p.n]||0)+1;
-  S.rolls.unshift({d:d,n:p.n,t:p.k,ep:res.ep,b:res.b});S.rolls=S.rolls.slice(0,60);
+  S.last=d;S.ep+=ep;
+  stops.forEach(function(st){S.found[st.id]=(S.found[st.id]||0)+1;});
+  S.rolls.unshift({d:d,stops:stops,rb:rb,ep:ep});S.rolls=S.rolls.slice(0,60);
   save();rolling=false;showTicket(S.rolls[0]);stats();updateBtn();renderCollection();
-  if(p.k>=3)$('#msg').textContent=TIERS[p.k].n+'. Esto no sale todos los días.';
+  var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
+  if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
  }
  tick();
 }
@@ -342,12 +379,10 @@ $('#rollBtn').addEventListener('click',doRoll);
 $('#shareBtn').addEventListener('click',function(){
  var r=todayRoll()||S.rolls[0];if(!r)return;
  var SQ=['⬜','🟩','🟦','🟪','🟧','🟥'];
- function bsq(ep){return ep>=40?SQ[4]:ep>=35?SQ[3]:ep>=30?SQ[2]:ep>=15?SQ[1]:SQ[0];}
- var EMO={'Con tilde':'✍️','Puerto':'⚓','Santoral':'⛪','Con agua':'🌊','Letra doble':'👯','Pocas letras':'🤏','Nombre kilométrico':'📏','Monovocal':'🅰️','Espejo':'🪞','Diéresis':'✨'};
- var bs=r.b.slice().sort(function(a,b){return b.ep-a.ep;});
- var lines=bs.slice(0,3).map(function(x){return bsq(x.ep)+' '+(EMO[x.n]||'🧭')+' '+x.n;});
- var more=bs.length-3;
- var txt='Venecodle 🇻🇪 '+r.n+'\n\n'+SQ[r.t]+' '+TIERS[r.t].n.toUpperCase()+'\n\n'+lines.join('\n')+(more>0?'\n+'+more+' más':'')+'\n\n'+fmt(r.ep)+' EP\n\nhttps://domomeid.github.io/Venecodle/';
+ var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st);});
+ var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n;});
+ var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
+  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+fmt(r.ep)+' EP';
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
@@ -355,7 +390,10 @@ $('#shareBtn').addEventListener('click',function(){
 document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('click',function(){
  document.querySelectorAll('nav button').forEach(function(x){x.setAttribute('aria-selected',x===b?'true':'false');});
  ['hoy','col','reg'].forEach(function(id){$('#'+id).hidden=(id!==b.dataset.tab);});
+ if(b.dataset.tab==='hoy'&&map)setTimeout(function(){map.invalidateSize();},60);
 });});
+$('#unl').checked=!!S.unl;
+$('#unl').addEventListener('change',function(e){S.unl=e.target.checked;save();updateBtn();});
 $('#simBtn').addEventListener('click',function(){maracaibo(true);});
 var delT=null;
 $('#delBtn').addEventListener('click',function(){
