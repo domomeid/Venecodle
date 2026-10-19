@@ -71,6 +71,15 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .stops .meta{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .stops .b2{font-size:11.5px;color:var(--muted);display:block}
 
+/* slot machine: ventana fija con fade arriba/abajo, la cinta baja por translateY */
+.slot{overflow:hidden;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 28%,#000 72%,transparent);mask-image:linear-gradient(to bottom,transparent,#000 28%,#000 72%,transparent)}
+.slot .reel{transition:transform 1.4s cubic-bezier(.15,.75,.2,1)}
+.rc{height:1.4em;line-height:1.4em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stops .slot{height:1.4em;flex:1;min-width:0}
+.t-name .slot{height:.95em}
+.t-name .rc{height:.95em;line-height:.95em}
+@media (prefers-reduced-motion:reduce){.slot .reel{transition:none}}
+
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .leaflet-container{font-family:var(--f-body)}
@@ -341,34 +350,37 @@ function doRoll(){
  S.rolls.unshift(roll);S.rolls=S.rolls.slice(0,60);
  save();
 
- /* reveal slot-machine */
+ /* reveal slot-machine: cada parada es un reel vertical que baja y traba
+    escalonado; el héroe gira hasta el final y aterriza en la parada 1 */
  var name=$('#tName');
  $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
  $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;
- $('#tStops').innerHTML=stops.map(function(s,i){
-  return '<li><span class="ord">'+(i+1)+'</span><span><span class="sn">···</span><span class="b2"></span></span><span class="meta"></span></li>';
- }).join('');
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();return;}
- name.className='t-name rolling';
- var hero=setInterval(function(){name.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;},70);
- var items=$('#tStops').children,i=0;
- function rollOne(){
-  if(i>=stops.length){
-   clearInterval(hero);rolling=false;
-   showTicket(roll);stats();updateBtn();renderCollection();
+ var STAGGER=420,REELMS=1400;
+ function strip(finalName,extra){
+  var out=[];for(var j=0;j<12+extra;j++)out.push(PLACES[Math.floor(rnd()*PLACES.length)].n);
+  out.push(finalName);return out;
+ }
+ name.innerHTML='<div class="slot"><div class="reel">'+strip(dname(stops[0]),50).map(function(n){return '<div class="rc">'+n+'</div>';}).join('')+'</div></div>';
+ $('#tStops').innerHTML=stops.map(function(st,i){
+  return '<li><span class="ord">'+(i+1)+'</span><div class="slot"><div class="reel">'+strip(dname(st),i*3).map(function(n){return '<div class="rc">'+n+'</div>';}).join('')+'</div></div><span class="meta"></span></li>';
+ }).join('');
+ var total=STAGGER*(stops.length-1)+REELMS;
+ requestAnimationFrame(function(){requestAnimationFrame(function(){
+  var hr=name.querySelector('.reel'),hn=hr.children.length;
+  hr.style.transition='transform '+total+'ms cubic-bezier(.12,.7,.2,1)';
+  hr.style.transform='translateY(-'+(hn-1)*0.95+'em)';
+  var items=$('#tStops').children;
+  for(var i=0;i<items.length;i++){var r=items[i].querySelector('.reel');
+   r.style.transitionDelay=(i*STAGGER)+'ms';
+   r.style.transform='translateY(-'+(r.children.length-1)*1.4+'em)';}
+  setTimeout(function(){
+   rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
    var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
    if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
-   return;
-  }
-  var li=items[i],sn=li.querySelector('.sn'),t=0,delay=50;
-  (function spin(){
-   if(t<12){sn.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;sn.className='sn rolling';t++;setTimeout(spin,delay+=12);return;}
-   li.outerHTML=stopHtml(stops[i],i);
-   i++;setTimeout(rollOne,320);
-  })();
- }
- rollOne();
+  },total+150);
+ });});
 }
 
 /* Maracaibo */
