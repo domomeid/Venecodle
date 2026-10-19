@@ -379,10 +379,11 @@ $('#rollBtn').addEventListener('click',doRoll);
 $('#shareBtn').addEventListener('click',function(){
  var r=todayRoll()||S.rolls[0];if(!r)return;
  var SQ=['⬜','🟩','🟦','🟪','🟧','🟥'];
- var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st);});
- var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n;});
+ var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
+ var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
+ var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
-  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+fmt(r.ep)+' EP';
+  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
