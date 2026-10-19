@@ -306,7 +306,7 @@ function renderMap(r){
  try{
   if(!r){el.hidden=true;return;}
   el.hidden=false;
-  if(!map){map=L.map('map',{scrollWheelZoom:false});L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'&copy; OpenStreetMap'}).addTo(map);}
+  if(!map){map=L.map('map',{scrollWheelZoom:false});L.tileLayer('https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_4p3h_1_ebd0007578c663e31e831584',{maxZoom:12,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attribution/">CARTO</a>'}).addTo(map);}
   markers.forEach(function(m){map.removeLayer(m);});markers=[];
   if(routeLine)map.removeLayer(routeLine);
   var pts=r.stops.map(function(st,i){
