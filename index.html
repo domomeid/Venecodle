@@ -51,6 +51,7 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .t-top{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
 .t-name{font-size:clamp(44px,13vw,92px);font-weight:900;line-height:.95;text-transform:uppercase;margin:14px 0 6px;overflow-wrap:anywhere;min-height:1em}
 .t-name.idle{color:var(--line)}
+.t-name.long{font-size:clamp(26px,7vw,46px)}
 .t-sub{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .chip{font-family:var(--f-mono);font-size:12px;border:1.5px solid currentColor;padding:1px 8px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
 .ep{font-family:var(--f-display);font-weight:800;font-size:26px;margin-left:auto;font-variant-numeric:tabular-nums}
@@ -252,7 +253,7 @@ function epColor(ep){return ep>=40?'var(--r4)':ep>=30?'var(--r3)':ep>=20?'var(--
 
 function stopHtml(st,i){
  var t=TIERS[st.k];
- var minis=st.b.map(function(x){return '<span class="mini" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
+ var minis=st.b.slice().sort(function(a,b){return b.ep-a.ep;}).map(function(x){return '<span class="mini" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
  return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span style="min-width:0"><span class="sn">'+dname(st)+
   '</span><span class="b2">'+minis+'</span></span>'+
   '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>+'+fmt(st.ep)+'</span></li>';
@@ -264,7 +265,7 @@ function showTicket(r){
   $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';
   $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);return;}
  var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
- name.textContent=dname(st0);name.className='t-name';
+ name.textContent=dname(st0);name.className='t-name'+(dname(st0).length>16?' long':'');
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
