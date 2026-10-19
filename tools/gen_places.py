@@ -129,8 +129,8 @@ def main():
             st, reg = ADMIN1[r[10]]
             if st in EXCLUDE:
                 continue
-            places.append(dict(id=int(r[0]), n=st, s=st, t='E', r=reg, k=0,
-                               la=round(float(r[4]), 4), ln=round(float(r[5]), 4), g=[]))
+            places.append({'id': int(r[0]), 'n': st, 's': st, 't': 'E', 'r': reg, 'k': 0,
+                           'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4), 'g': []})
 
     # Localidades pobladas: todas las capitales (PPLA/PPLA2) + top poblacion
     def is_cand(r):
@@ -154,8 +154,8 @@ def main():
         tipo = 'C' if pop >= 5000 or r[7] in ('PPLA', 'PPLA2') else 'P'
         g = tags_for(r[10], lat, dem)
         g = sorted(set(g) | OVERRIDES.get(nombre, set()))
-        places.append(dict(id=int(r[0]), n=nombre, s=st, t=tipo, r=reg, k=pop_tier(pop),
-                           la=round(lat, 4), ln=round(lng, 4), g=g))
+        places.append({'id': int(r[0]), 'n': nombre, 's': st, 't': tipo, 'r': reg, 'k': pop_tier(pop),
+                       'la': round(lat, 4), 'ln': round(lng, 4), 'g': g})
         seen_names.add(nombre)
 
     # Manuales (lugares no-poblacion del catalogo viejo): si GeoNames ya trajo
@@ -166,8 +166,8 @@ def main():
         if existing:
             existing['g'] = sorted(set(existing['g']) | set(g))
             continue
-        places.append(dict(id=pid, n=n, s=st, t=t, r=reg,
-                           k=5 if i < 8 else 4, la=la, ln=ln, g=g))
+        places.append({'id': pid, 'n': n, 's': st, 't': t, 'r': reg,
+                       'k': 5 if i < 8 else 4, 'la': la, 'ln': ln, 'g': g})
 
     # garantizar nombres del catalogo viejo (migracion found)
     out = 'window.PLACES=' + json.dumps(places, ensure_ascii=False, separators=(',', ':')) + ';\n'
