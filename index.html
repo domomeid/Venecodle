@@ -137,6 +137,11 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .hist li{display:flex;gap:10px;justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px}
 .hist span{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .hist .route{overflow-wrap:anywhere}
+.adv{margin-top:14px}
+.adv>summary{cursor:pointer;font-size:11px;color:var(--muted);list-style:none;user-select:none}
+.adv>summary::-webkit-details-marker{display:none}
+.adv>summary::before{content:'▸ '}
+.adv[open]>summary::before{content:'▾ '}
 
 /* reglas */
 .prose{display:flex;flex-direction:column;gap:14px;max-width:65ch}
@@ -226,18 +231,21 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <li>Completa tu colección y mantén la racha.</li>
       </ol>
       <div class="scroll"><table id="rarTable"></table></div>
+      <div class="scroll"><table id="badTable"></table></div>
       <div class="scroll"><table id="rutTable"></table></div>
       <div class="warn">
         <p><b>Existe un lugar que no está en la colección.</b> Si te sale Maracaibo, tu cuenta se elimina al instante, sin confirmación y sin vuelta atrás. La probabilidad es de 1 entre 100 trillones (1 en 10<sup>20</sup>), más improbable que ganar la lotería dos veces seguidas.</p>
       </div>
-      <div class="settings">
-        <label class="chk"><input type="checkbox" id="unl"><span>Modo prueba: sorteos ilimitados (para directos y pruebas)</span></label>
-        <div class="actions">
-          <button class="btn small" id="simBtn">Simular Maracaibo (no borra nada)</button>
-          <button class="btn small" id="delBtn">Borrar mi cuenta</button>
+      <details class="adv"><summary>Opciones para pruebas</summary>
+        <div class="settings">
+          <label class="chk"><input type="checkbox" id="unl"><span>Modo prueba: sorteos ilimitados sin colección ni puntos (para directos y pruebas)</span></label>
+          <div class="actions">
+            <button class="btn small" id="simBtn">Simular Maracaibo (no borra nada)</button>
+            <button class="btn small" id="delBtn">Borrar mi cuenta</button>
+          </div>
+          <p class="note">Tu progreso se guarda solo en este navegador.</p>
         </div>
-        <p class="note">Tu progreso se guarda solo en este navegador.</p>
-      </div>
+      </details>
     </div>
   </section>
 </div>
@@ -256,7 +264,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
 <script>
 (function(){
 var KEY='venecodle.v1';
-var TIERS=VL.TIERS,REG=VL.REG,TYPE=VL.TYPE,TERRAIN=VL.TERRAIN;
+var TIERS=VL.TIERS,REG=VL.REG,TYPE=VL.TYPE,TERRAIN=VL.TERRAIN,BADGES=VL.BADGES;
 var PLACES=VL.PLACES,BYTIER=VL.BYTIER,BYID=VL.BYID,HOMONYMS=VL.HOMONYMS;
 var NPARADAS=5;
 
@@ -279,7 +287,9 @@ function perPlace(k){return Math.round(BYTIER[k].length/TIERS[k].p);}
 var $=function(s){return document.querySelector(s);};
 var rolling=false,map=null,routeLine=null,markers=[];
 
-function todayRoll(){var r=S.rolls[0];return r&&r.d===today()?r:null;}
+function todayRoll(){var r=S.rolls[0];return r&&r.d===today()&&!r.test?r:null;}
+/* lo que muestra el boleto: en modo prueba el ultimo roll; fuera, el ultimo real */
+function curRoll(){return S.unl?S.rolls[0]:(S.rolls.filter(function(r){return !r.test;})[0]||null);}
 function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
 
 function epColor(ep){return ep>=40?'var(--r4)':ep>=30?'var(--r3)':ep>=20?'var(--r2)':ep>=15?'var(--r1)':'var(--r0)';}
@@ -308,8 +318,9 @@ function showTicket(r){
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
  $('#tProb').textContent=r.stops.length+' paradas · '+(r.rb&&r.rb.length?r.rb[0].n:'');
  $('#tDate').textContent=r.d.split('-').reverse().join('/');
+ if(r.test)$('#tNum').textContent='Sorteo de prueba';
  renderPoem(r);
- $('#shareBtn').hidden=false;
+ $('#shareBtn').hidden=S.unl||!!r.test;
  renderMap(r);
  renderExtras(r);
 }
@@ -322,7 +333,7 @@ function renderPoem(r){
  var pool=VL.wordPool(r);
  pe.innerHTML=(r.poem.length
   ? r.poem.map(function(w,i){return '<button class="mini" data-i="'+i+'">'+w+'</button>';}).join('')
-  : '<span class="hint">Sugerencia: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma la tuya tocando palabras ↓</span>')
+  : '<span class="hint">Poema base: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma el tuyo tocando palabras ↓</span>')
   +'<span class="hint">'+r.poem.length+'/'+VL.POEM_MAX+'</span>';
  var full=r.poem.length>=VL.POEM_MAX;
  pl.innerHTML=pool.map(function(w,i){
@@ -340,7 +351,7 @@ function stats(){
 function updateBtn(){
  var b=$('#rollBtn'),done=!!todayRoll()&&!S.unl;
  b.disabled=done||rolling;
- b.textContent=done?'Ya rodaste hoy':(S.unl&&todayRoll()?'Otro roadtrip (modo prueba)':'Arrancar roadtrip');
+ b.textContent=done?'Ya rodaste hoy':(S.unl&&S.rolls.length?'Otro roadtrip (modo prueba)':'Arrancar roadtrip');
  var w=$('#tWait');
  if(done){var n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),s=Math.floor((m-n)/1000);
   w.textContent='Próximo sorteo en '+pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60);}
@@ -357,7 +368,8 @@ function renderCollection(){
    out+=c?'<div class="cell" style="color:var(--fg)"><span>'+VL.displayName(p)+'</span><em>x'+c+'</em></div>':'<div class="cell lock"><span>? ? ?</span><em>'+TYPE[p.t]+'</em></div>';});
   out+='</div></div>';});
  $('#collection').innerHTML=out;
- $('#hist').innerHTML=S.rolls.length?S.rolls.slice(0,10).map(function(r){
+ var histRolls=S.rolls.filter(function(r){return !r.test;});
+ $('#hist').innerHTML=histRolls.length?histRolls.slice(0,10).map(function(r){
   return '<li><strong class="route">'+r.stops.map(dname).join(' → ')+'</strong><span>+'+fmt(r.ep)+' EP · '+r.d.split('-').reverse().join('/')+'</span></li>';
  }).join(''):'<li><span>Todavía no has arrancado ningún roadtrip.</span></li>';
 }
@@ -366,7 +378,10 @@ function renderRules(){
  var h='<tr><th>Rareza</th><th>Prob. del grupo</th><th>Lugares</th><th>Cada uno</th><th>EP base</th></tr>';
  TIERS.forEach(function(t,k){h+='<tr><td style="color:'+t.c+';font-weight:600">'+t.n+'</td><td>'+(t.p*100).toLocaleString('es-ES')+'%</td><td>'+BYTIER[k].length+'</td><td>1 en '+fmt(perPlace(k))+'</td><td>'+t.ep+'</td></tr>';});
  $('#rarTable').innerHTML=h;
- var tb='<tr><th>Badge</th><th>EP</th></tr>';
+ var bb='<tr><th>Badge de parada</th><th>Cuándo se gana</th><th>EP</th></tr>';
+ BADGES.forEach(function(x){bb+='<tr><td style="font-weight:600">'+x.n+'</td><td>'+x.d+'</td><td>'+x.ep+'</td></tr>';});
+ $('#badTable').innerHTML=bb;
+ var tb='<tr><th>Badge de ruta / terreno</th><th>EP</th></tr>';
  [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
   {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15}].forEach(function(x){
   tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});
@@ -400,10 +415,9 @@ function renderMap(r){
 /* datos extra: jerarquía wiki (1 lugar destacado) > clima Open-Meteo > pob/elev GeoNames */
 var WXE={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌦️',61:'🌧️',63:'🌧️',65:'🌧️',66:'🌧️',67:'🌧️',71:'🌨️',73:'🌨️',75:'🌨️',77:'🌨️',80:'🌦️',81:'🌦️',82:'🌦️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'};
 function ficha(p,extra){
- var bits=[];
- if(p.p)bits.push(fmt(p.p)+' hab');
- if(p.e)bits.push(fmt(p.e)+' m s. n. m.');
- if(!bits.length)bits.push(REG[p.r]);
+ var bits=[(TYPE[p.t]||'')+' · '+p.s+' · Región '+REG[p.r]];
+ if(p.p)bits.push(fmt(p.p)+' habitantes');
+ if(p.e)bits.push(fmt(p.e)+' metros sobre el nivel del mar');
  return '<span class="wtitle">'+VL.displayName(p)+'</span><p>'+(extra||bits.join(' · '))+'</p>';
 }
 function wikiTry(p,titles){
@@ -417,14 +431,22 @@ function wikiTry(p,titles){
    return wikiTry(p,titles);
   }).catch(function(){return null;});
 }
+/* barrido: intenta wiki por cada parada (de mas rara a mas comun) hasta el primer exito */
+function wikiSweep(stops,i){
+ if(i>=stops.length)return Promise.resolve(null);
+ var p=BYID[stops[i].id];
+ if(!p)return wikiSweep(stops,i+1);
+ return wikiTry(p,[p.n+', Venezuela',p.n+', '+p.s,p.n]).then(function(h){
+  return h||wikiSweep(stops,i+1);});
+}
 function renderExtras(r){
  var L=$('#railL'),R=$('#railR');
  if(!r||!r.stops.length){L.hidden=true;R.hidden=true;return;}
- var star=r.stops.slice().sort(function(a,b){return b.k-a.k||b.ep-a.ep;})[0];
- var p=star.id&&BYID[star.id];if(!p){L.hidden=true;R.hidden=true;return;}
+ var rare=r.stops.slice().sort(function(a,b){return b.k-a.k||b.ep-a.ep;});
+ var p=rare[0].id&&BYID[rare[0].id];if(!p){L.hidden=true;R.hidden=true;return;}
  L.hidden=false;R.hidden=false;
  $('#railLB').innerHTML=ficha(p,'…');
- wikiTry(p,[p.n+', Venezuela',p.n+', '+p.s,p.n]).then(function(html){
+ wikiSweep(rare,0).then(function(html){
   if(S.rolls[0]===r)$('#railLB').innerHTML=html||ficha(p);
  });
  var lats=r.stops.map(function(s){var q=BYID[s.id];return q&&q.la;}).filter(function(x){return x!=null;});
@@ -456,10 +478,13 @@ function doRoll(){
  var stops=ordered.map(function(p){var res=VL.evalPlace(p);return {id:p.id,n:p.n,s:p.s,k:p.k,t:p.t,ep:res.ep,b:res.b};});
  var rb=VL.evalRoute(stops);
  var d=today(),ep=stops.reduce(function(a,s){return a+s.ep;},0)+rb.reduce(function(a,x){return a+x.ep;},0);
- S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
- S.last=d;S.ep+=ep;
- stops.forEach(function(st){S.found[st.id]=(S.found[st.id]||0)+1;});
  var roll={d:d,stops:stops,rb:rb,ep:ep};
+ if(S.unl)roll.test=1; /* modo prueba: no toca coleccion, EP ni racha */
+ else{
+  S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
+  S.last=d;S.ep+=ep;
+  stops.forEach(function(st){S.found[st.id]=(S.found[st.id]||0)+1;});
+ }
  S.rolls.unshift(roll);S.rolls=S.rolls.slice(0,60);
  save();
 
@@ -534,8 +559,8 @@ function maracaibo(sim){
 /* eventos */
 $('#rollBtn').addEventListener('click',doRoll);
 $('#shareBtn').addEventListener('click',function(){
- var r=todayRoll()||S.rolls[0];if(!r)return;
- var SQ=['⬜','🟩','🟦','🟪','🟧','🟥'];
+ var r=curRoll();if(!r||r.test)return;
+ var SQ=['⬜','🟩','🟦','🟪','🟧','🟥','🟨','🟫'];
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
@@ -552,16 +577,16 @@ document.querySelectorAll('nav button').forEach(function(b){b.addEventListener('
  if(b.dataset.tab==='hoy'&&map)setTimeout(function(){map.invalidateSize();},60);
 });});
 $('#unl').checked=!!S.unl;
-$('#unl').addEventListener('change',function(e){S.unl=e.target.checked;save();updateBtn();});
+$('#unl').addEventListener('change',function(e){S.unl=e.target.checked;save();updateBtn();showTicket(curRoll());});
 $('#tPool').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;
- var r=todayRoll()||S.rolls[0];if(!r)return;
+ var r=curRoll();if(!r)return;
  r.poem=r.poem||[];if(r.poem.length>=VL.POEM_MAX)return;
  r.poem.push(VL.wordPool(r)[+b.dataset.p]);save();renderPoem(r);
 });
 $('#tPoem').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;
- var r=todayRoll()||S.rolls[0];if(!r||!r.poem)return;
+ var r=curRoll();if(!r||!r.poem)return;
  r.poem.splice(+b.dataset.i,1);save();renderPoem(r);
 });
 $('#simBtn').addEventListener('click',function(){maracaibo(true);});
@@ -573,7 +598,7 @@ $('#delBtn').addEventListener('click',function(){
  delT=setTimeout(function(){delT=null;b.textContent='Borrar mi cuenta';b.classList.remove('danger');},4000);
 });
 
-showTicket(todayRoll());stats();updateBtn();renderCollection();renderRules();
+showTicket(curRoll());stats();updateBtn();renderCollection();renderRules();
 setInterval(function(){if(document.visibilityState==='visible'){stats();updateBtn();}},1000);
 })();
 </script>
