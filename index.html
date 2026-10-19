@@ -78,7 +78,15 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .stops .slot{height:1.4em;flex:1;min-width:0}
 .t-name .slot{height:.95em}
 .t-name .rc{height:.95em;line-height:.95em}
-@media (prefers-reduced-motion:reduce){.slot .reel{transition:none}}
+@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.stops li.pop{animation:pop .35s ease}
+#tBadges .badge{animation:pop .35s ease both}
+#tBadges .badge:nth-child(2){animation-delay:.08s}
+#tBadges .badge:nth-child(3){animation-delay:.16s}
+#tBadges .badge:nth-child(4){animation-delay:.24s}
+#tBadges .badge:nth-child(n+5){animation-delay:.32s}
+#map:not([hidden]){animation:pop .5s ease}
+@media (prefers-reduced-motion:reduce){.slot .reel{transition:none}.stops li.pop,#tBadges .badge,#map{animation:none}}
 
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
@@ -367,19 +375,33 @@ function doRoll(){
   return '<li><span class="ord">'+(i+1)+'</span><div class="slot"><div class="reel">'+strip(dname(st),i*3).map(function(n){return '<div class="rc">'+n+'</div>';}).join('')+'</div></div><span class="meta"></span></li>';
  }).join('');
  var total=STAGGER*(stops.length-1)+REELMS;
+ var items=$('#tStops').children;
+ /* contador EP interpolado: persigue epTarget con easing por frame */
+ var epTarget=0,epShown=0,epRaf=null;
+ function epTick(){epShown+=(epTarget-epShown)*0.16;
+  if(Math.abs(epTarget-epShown)<0.5){epShown=epTarget;epRaf=null;}
+  $('#tEp').textContent='+'+fmt(Math.round(epShown))+' EP';
+  if(epRaf!==null)epRaf=requestAnimationFrame(epTick);}
+ function bumpEp(d){epTarget+=d;if(epRaf===null)epRaf=requestAnimationFrame(epTick);}
  requestAnimationFrame(function(){requestAnimationFrame(function(){
   var hr=name.querySelector('.reel'),hn=hr.children.length;
   hr.style.transition='transform '+total+'ms cubic-bezier(.12,.7,.2,1)';
   hr.style.transform='translateY(-'+(hn-1)*0.95+'em)';
-  var items=$('#tStops').children;
   for(var i=0;i<items.length;i++){var r=items[i].querySelector('.reel');
    r.style.transitionDelay=(i*STAGGER)+'ms';
    r.style.transform='translateY(-'+(r.children.length-1)*1.4+'em)';}
+  /* cada slot traba -> swap con pop + acumula su EP al contador */
+  stops.forEach(function(st,i){setTimeout(function(){
+   items[i].outerHTML=stopHtml(st,i);items[i].classList.add('pop');
+   bumpEp(st.ep);
+  },i*STAGGER+REELMS);});
+  /* al final: suman los badges de ruta y se pinta el boleto completo */
+  setTimeout(function(){bumpEp(rb.reduce(function(a,x){return a+x.ep;},0));},total+120);
   setTimeout(function(){
    rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
    var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
    if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
-  },total+150);
+  },total+650);
  });});
 }
 
