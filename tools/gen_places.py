@@ -68,6 +68,12 @@ MANUAL = [
     (9000028, 'Güigüe', 'Carabobo', 'P', 'Ce', 10.0833, -67.7833, 660, []),
     (9000029, 'Güiria', 'Sucre', 'P', 'Or', 10.5667, -62.3000, 15, ['costero']),
     (9000030, 'Río Caribe', 'Sucre', 'P', 'Or', 10.6833, -63.1000, 15, ['costero']),
+    # Iconos ausentes del dump GeoNames o fijados a mano (tier 5 = Mitico)
+    (9000031, 'Pico Bolívar', 'Mérida', 'K', 'An', 8.5417, -71.0467, 4981, ['andino']),
+    (9000032, 'Cerro El Ávila', 'La Guaira', 'K', 'Ce', 10.5400, -66.8800, 2765, ['andino']),
+    (9000033, 'Socopó', 'Barinas', 'P', 'Ll', 8.2333, -70.8167, 350, ['llano']),
+    (9000034, 'Monte Roraima', 'Bolívar', 'K', 'Gu', 5.1433, -60.7625, 2810, ['selva']),
+    (9000035, 'Delta del Orinoco', 'Delta Amacuro', 'N', 'Gu', 8.6000, -62.3000, 5, ['selva']),
 ]
 
 # overrides por nombre para taggeo manual: nombre -> set(tags)
@@ -79,8 +85,28 @@ ALIASES = {'Valle de La Pascua': 'Valle de la Pascua'}
 # nombres que deben entrar aunque no clasifiquen por poblacion
 MUST_HAVE = {'Puerto Ordaz', 'El Callao'}
 
-MAX_PLACES = 450  # tope del catalogo generado (los MANUAL se suman aparte)
+# tier forzado por (nombre, estado): 6=Legendario (Petare), 7=Basura (Guarenas)
+TIER_OVERRIDE = {('petare', 'Miranda'): 6, ('guarenas', 'Miranda'): 7,
+                 ('pico bolívar', 'Mérida'): 5, ('lago de maracaibo', 'Zulia'): 4}
+
+MAX_PLACES = 1600  # tope de pobladas generadas (MANUAL/naturales se suman aparte)
 EXCLUDE = {'Maracaibo'}  # el evento wipe queda 1-en-10^20 (D6)
+
+# features naturales: codigo GeoNames -> (tipo juego, tier, tope, ordena por elevacion)
+NATURAL = {
+    'BCH':  ('B', 3, 80,  False),  # playas
+    'FLLS': ('F', 3, 90,  False),  # saltos/cataratas
+    'ISL':  ('I', 3, 160, False),  # islas y cayos
+    'LK':   ('G', 3, 90,  False),  # lagos
+    'LGN':  ('G', 3, 60,  False),  # lagunas
+    'PK':   ('K', 3, 160, True),   # picos
+    'MT':   ('K', 4, 140, True),   # cerros/montanas (mas raros: solo los altos cuentan)
+    'PRK':  ('R', 3, 80,  False),  # parques nacionales
+    'RES':  ('R', 3, 40,  False),  # reservas
+    'RESN': ('R', 3, 40,  False),  # reservas naturales
+    'CAPE': ('N', 3, 40,  False),  # cabos
+    'VLC':  ('K', 4, 10,  True),   # volcan
+}
 
 
 def load_geonames():
@@ -100,8 +126,7 @@ def pop_tier(pop):
     if pop >= 60_000:  return 1
     if pop >= 15_000:  return 2
     if pop >= 4_000:   return 3
-    if pop >= 1_000:   return 4
-    return 5
+    return 4  # aldeas/barrios sin poblacion -> Anomalia; Mitico queda curado (MANUAL)
 
 
 def tags_for(state_code, lat, dem):
@@ -133,14 +158,14 @@ def main():
                            'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4), 'g': [],
                            'p': int(r[14] or 0), 'e': 0})
 
-    # Localidades pobladas: todas las capitales (PPLA/PPLA2) + top poblacion
+    # Localidades pobladas: capitales (PPLA/PPLA2) siempre, luego PPL/PPLL/PPLX
+    # por poblacion; los de pop=0 se ordenan por id para esparcirlos por estado.
     def is_cand(r):
         return (r[6] == 'P' and r[7].startswith('PPL') and r[10] in ADMIN1
-                and r[1] not in EXCLUDE and (r[7] in ('PPLA', 'PPLA2') or int(r[14] or 0) > 0
-                or r[1] in MUST_HAVE))
+                and r[1] not in EXCLUDE)
     cand = [r for r in rows if is_cand(r)]
     rank = {'PPLA': 0, 'PPLA2': 1}
-    cand.sort(key=lambda r: (rank.get(r[7], 2), -int(r[14] or 0)))
+    cand.sort(key=lambda r: (rank.get(r[7], 2), -int(r[14] or 0), int(r[0])))
     seen = set()  # (nombre normalizado, admin1) -> dedup
     for r in cand[:MAX_PLACES]:
         key = (r[1].lower(), r[10])
@@ -155,9 +180,38 @@ def main():
         tipo = 'C' if pop >= 5000 or r[7] in ('PPLA', 'PPLA2') else 'P'
         g = tags_for(r[10], lat, dem)
         g = sorted(set(g) | OVERRIDES.get(nombre, set()))
-        places.append({'id': int(r[0]), 'n': nombre, 's': st, 't': tipo, 'r': reg, 'k': pop_tier(pop),
+        places.append({'id': int(r[0]), 'n': nombre, 's': st, 't': tipo, 'r': reg,
+                       'k': TIER_OVERRIDE.get((nombre.lower(), st), pop_tier(pop)),
                        'la': round(lat, 4), 'ln': round(lng, 4), 'g': g, 'p': pop, 'e': dem})
         seen_names.add(nombre)
+
+    # Municipios: divisiones ADM2. Nombre completo "Municipio X" para no chocar
+    # con ciudades homonimas del mismo estado en el dedup.
+    for r in rows:
+        if (r[6] == 'A' and r[7] == 'ADM2' and r[10] in ADMIN1
+                and r[1].replace('Municipio ', '') not in EXCLUDE):
+            st, reg = ADMIN1[r[10]]
+            places.append({'id': int(r[0]), 'n': r[1], 's': st, 't': 'M', 'r': reg, 'k': 2,
+                           'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4), 'g': [],
+                           'p': int(r[14] or 0), 'e': int(r[16] or 0)})
+
+    # Features naturales (playas, saltos, islas, picos, lagos, parques...)
+    for code, (tipo, tier, cap, by_dem) in NATURAL.items():
+        feats = [r for r in rows
+                 if r[7] == code and r[10] in ADMIN1 and r[1] not in EXCLUDE]
+        feats.sort(key=lambda r: -int(r[16] or 0) if by_dem else r[1])
+        for r in feats[:cap]:
+            if (r[1].lower(), r[10]) in seen:
+                continue
+            seen.add((r[1].lower(), r[10]))
+            st, reg = ADMIN1[r[10]]
+            dem = max(0, int(r[16] or 0))
+            g = sorted(set(tags_for(r[10], float(r[4]), dem)) | OVERRIDES.get(r[1], set()))
+            places.append({'id': int(r[0]), 'n': r[1], 's': st, 't': tipo, 'r': reg,
+                           'k': TIER_OVERRIDE.get((r[1].lower(), st), tier),
+                           'la': round(float(r[4]), 4), 'ln': round(float(r[5]), 4),
+                           'g': g, 'p': int(r[14] or 0), 'e': dem})
+            seen_names.add(r[1])
 
     # Manuales (lugares no-poblacion del catalogo viejo): si GeoNames ya trajo
     # el mismo nombre en el mismo estado, solo se fusionan los tags manuales.
@@ -168,12 +222,12 @@ def main():
             existing['g'] = sorted(set(existing['g']) | set(g))
             continue
         places.append({'id': pid, 'n': n, 's': st, 't': t, 'r': reg,
-                       'k': 5 if i < 8 else 4, 'la': la, 'ln': ln, 'g': g, 'p': 0, 'e': elev})
+                       'k': 5, 'la': la, 'ln': ln, 'g': g, 'p': 0, 'e': elev})
 
     # garantizar nombres del catalogo viejo (migracion found)
     out = 'window.PLACES=' + json.dumps(places, ensure_ascii=False, separators=(',', ':')) + ';\n'
     OUT.write_text(out, encoding='utf-8')
-    tiers = [sum(1 for p in places if p['k'] == k) for k in range(6)]
+    tiers = [sum(1 for p in places if p['k'] == k) for k in range(8)]
     print(f'{len(places)} lugares -> {OUT.name} ({OUT.stat().st_size//1024}KB) tiers={tiers}')
 
 

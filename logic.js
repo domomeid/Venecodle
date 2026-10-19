@@ -4,17 +4,18 @@
 'use strict';
 
 var TIERS = [
- {n:'Común',p:.52,ep:10,c:'var(--r0)'},{n:'Poco común',p:.26,ep:25,c:'var(--r1)'},
+ {n:'Común',p:.515,ep:10,c:'var(--r0)'},{n:'Poco común',p:.26,ep:25,c:'var(--r1)'},
  {n:'Raro',p:.13,ep:60,c:'var(--r2)'},{n:'Épico',p:.06,ep:150,c:'var(--r3)'},
- {n:'Anomalía',p:.025,ep:400,c:'var(--r4)'},{n:'Mítico',p:.005,ep:1000,c:'var(--r5)'}];
+ {n:'Anomalía',p:.025,ep:400,c:'var(--r4)'},{n:'Mítico',p:.005,ep:1000,c:'var(--r5)'},
+ {n:'Legendario',p:.001,ep:2500,c:'#d4a017'},{n:'Basura',p:.004,ep:1,c:'#795548'}];
 var REG = {Ce:'Centro',Oc:'Occidente',Or:'Oriente',An:'Andes',Ll:'Llanos',Gu:'Guayana',In:'Insular'};
-var TYPE = {E:'Estado',C:'Ciudad',P:'Pueblo'};
+var TYPE = {E:'Estado',M:'Municipio',C:'Ciudad',P:'Pueblo',B:'Playa',F:'Salto',K:'Pico',I:'Isla',G:'Lago',R:'Parque',N:'Accidente'};
 var TERRAIN = {
  costero:{n:'Costero',ep:15}, insular:{n:'Insular',ep:15}, andino:{n:'Andino',ep:20},
  selva:{n:'Selvático',ep:20}, llano:{n:'Llanero',ep:15}};
 
 var PLACES = G.PLACES || [];
-var BYTIER = [[],[],[],[],[],[]], BYID = {}, NAME2PLACES = {};
+var BYTIER = TIERS.map(function(){return[];}), BYID = {}, NAME2PLACES = {};
 PLACES.forEach(function (p) {
  BYTIER[p.k].push(p); BYID[p.id] = p;
  (NAME2PLACES[p.n] = NAME2PLACES[p.n] || []).push(p);
@@ -80,7 +81,8 @@ function pickStops(n, rnd) {
  while (out.length < n) {
   var r = rnd(), c = 0, k = 0;
   for (; k < TIERS.length-1; k++) {c += TIERS[k].p; if (r < c) break;}
-  var l = BYTIER[k], p = l[Math.floor(rnd()*l.length)];
+  var l = BYTIER[k]; if (!l.length) continue;
+  var p = l[Math.floor(rnd()*l.length)];
   if (!used[p.id]) {used[p.id] = 1; out.push(p);}
  }
  return out;

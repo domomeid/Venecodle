@@ -16,9 +16,15 @@ function log(s) {
 function approx(a, b, tol) { return Math.abs(a - b) <= tol; }
 function seq(seed) { var x = seed; return function () { x = (x * 1103515245 + 12345) % 2147483648; return x / 2147483648; }; }
 
-ok(VL.PLACES.length >= 250, 'catalogo >=250 (' + VL.PLACES.length + ')');
+ok(VL.PLACES.length >= 2000, 'catalogo >=2000 (' + VL.PLACES.length + ')');
 ok(VL.PLACES.every(function (p) { return p.la > 0.5 && p.la < 12.3 && p.ln < -59.7 && p.ln > -73.5; }), 'coords dentro de Venezuela');
-ok(!VL.PLACES.some(function (p) { return /maracaibo/i.test(p.n); }), 'Maracaibo fuera del catalogo');
+/* el wipe es solo la ciudad: el lago y demas lugares "Maracaibo" si entran */
+ok(!VL.PLACES.some(function (p) { return p.n === 'Maracaibo'; }), 'Maracaibo (ciudad) fuera del catalogo');
+ok(VL.PLACES.some(function (p) { return p.n === 'Lago de Maracaibo'; }), 'Lago de Maracaibo presente');
+ok(VL.PLACES.some(function (p) { return p.n === 'Petare' && p.k === 6; }), 'Petare Legendario (k=6)');
+ok(VL.PLACES.some(function (p) { return p.n === 'Guarenas' && p.k === 7; }), 'Guarenas Basura (k=7)');
+ok(VL.PLACES.some(function (p) { return p.n === 'Socopó'; }), 'Socopo presente');
+ok(VL.PLACES.some(function (p) { return p.t === 'M'; }) && VL.PLACES.some(function (p) { return p.t === 'B'; }), 'municipios y playas en catalogo');
 
 var ccs = VL.PLACES.filter(function (p) { return p.n === 'Caracas'; })[0];
 var val = VL.PLACES.filter(function (p) { return p.n === 'Valencia'; })[0];
