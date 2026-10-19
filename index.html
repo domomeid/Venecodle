@@ -322,35 +322,53 @@ function renderMap(r){
  }catch(e){el.hidden=true;}
 }
 
-/* sorteo */
+/* sorteo: se calcula y persiste de una vez; el reveal va slot por slot (suspense)
+   — si se cierra a mitad de animación, el roll ya quedó guardado */
 function doRoll(){
  if(rolling)return;
  if(todayRoll()&&!S.unl)return;
  rolling=true;updateBtn();$('#msg').textContent='';
  if(isMaracaibo()){maracaibo(false);rolling=false;return;}
  var picks=VL.pickStops(NPARADAS,rnd);
- var name=$('#tName');name.className='t-name rolling';
- $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';
+ var ordered=VL.orderRoute(picks);
+ var stops=ordered.map(function(p){var res=VL.evalPlace(p);return {id:p.id,n:p.n,s:p.s,k:p.k,t:p.t,ep:res.ep,b:res.b};});
+ var rb=VL.evalRoute(stops);
+ var d=today(),ep=stops.reduce(function(a,s){return a+s.ep;},0)+rb.reduce(function(a,x){return a+x.ep;},0);
+ S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
+ S.last=d;S.ep+=ep;
+ stops.forEach(function(st){S.found[st.id]=(S.found[st.id]||0)+1;});
+ var roll={d:d,stops:stops,rb:rb,ep:ep};
+ S.rolls.unshift(roll);S.rolls=S.rolls.slice(0,60);
+ save();
+
+ /* reveal slot-machine */
+ var name=$('#tName');
+ $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+ $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;
+ $('#tStops').innerHTML=stops.map(function(s,i){
+  return '<li><span class="ord">'+(i+1)+'</span><span><span class="sn">···</span><span class="b2"></span></span><span class="meta"></span></li>';
+ }).join('');
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
- var steps=reduce?0:22,i=0;
- function tick(){
-  if(i<steps){name.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;i++;setTimeout(tick,60+i*7);return;}
-  finish();
+ if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();return;}
+ name.className='t-name rolling';
+ var hero=setInterval(function(){name.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;},70);
+ var items=$('#tStops').children,i=0;
+ function rollOne(){
+  if(i>=stops.length){
+   clearInterval(hero);rolling=false;
+   showTicket(roll);stats();updateBtn();renderCollection();
+   var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
+   if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
+   return;
+  }
+  var li=items[i],sn=li.querySelector('.sn'),t=0,delay=50;
+  (function spin(){
+   if(t<12){sn.textContent=PLACES[Math.floor(rnd()*PLACES.length)].n;sn.className='sn rolling';t++;setTimeout(spin,delay+=12);return;}
+   li.outerHTML=stopHtml(stops[i],i);
+   i++;setTimeout(rollOne,320);
+  })();
  }
- function finish(){
-  var ordered=VL.orderRoute(picks);
-  var stops=ordered.map(function(p){var res=VL.evalPlace(p);return {id:p.id,n:p.n,s:p.s,k:p.k,t:p.t,ep:res.ep,b:res.b};});
-  var rb=VL.evalRoute(stops);
-  var d=today(),ep=stops.reduce(function(a,s){return a+s.ep;},0)+rb.reduce(function(a,x){return a+x.ep;},0);
-  S.streak=(S.last===d)?S.streak:(S.last===yesterday()?S.streak+1:1);
-  S.last=d;S.ep+=ep;
-  stops.forEach(function(st){S.found[st.id]=(S.found[st.id]||0)+1;});
-  S.rolls.unshift({d:d,stops:stops,rb:rb,ep:ep});S.rolls=S.rolls.slice(0,60);
-  save();rolling=false;showTicket(S.rolls[0]);stats();updateBtn();renderCollection();
-  var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
-  if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
- }
- tick();
+ rollOne();
 }
 
 /* Maracaibo */
