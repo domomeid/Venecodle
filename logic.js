@@ -76,6 +76,15 @@ function orderRoute(stops) {
  return route;
 }
 
+/* paradas por roll: menos = mas raro y mas puntoso (ver LEG_BONUS en evalRoute) */
+var LEGS=[[5,.55],[4,.22],[3,.13],[2,.07],[1,.03]];
+var LEG_BONUS={4:40,3:120,2:300,1:800};
+var LEG_NAME={4:'Ruta ligera',3:'Ruta corta',2:'Dúo de paradas',1:'¡Salto único!'};
+function pickLegs(rnd){
+ var r=rnd(),c=0;
+ for(var i=0;i<LEGS.length;i++){c+=LEGS[i][1];if(r<c)return LEGS[i][0];}
+ return 5;
+}
 function pickStops(n, rnd) {
  var used = {}, out = [];
  while (out.length < n) {
@@ -101,6 +110,7 @@ function evalRoute(stops) {
  if (leg > 300) rb.push({n:'Tramo largo: '+leg+' km', ep:20});
  var nr = Object.keys(regs).length;
  if (nr >= 3) rb.push({n:'Cruza '+nr+' regiones', ep:25});
+ if (stops.length < 5) rb.push({n:LEG_NAME[stops.length]+' ('+stops.length+' parada'+(stops.length>1?'s':'')+')', ep:LEG_BONUS[stops.length]||0});
  if (tags.costero && tags.andino) rb.push({n:'De la playa a los Andes', ep:30});
  if (tags.selva && tags.costero) rb.push({n:'De la selva al mar', ep:30});
  if (tags.insular) rb.push({n:'Escapada insular', ep:15});
@@ -204,6 +214,6 @@ G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
  norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace,
- hav:hav, orderRoute:orderRoute, pickStops:pickStops, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, versify:versify, POEM_MAX:POEM_MAX
+ hav:hav, orderRoute:orderRoute, pickStops:pickStops, pickLegs:pickLegs, LEGS:LEGS, LEG_BONUS:LEG_BONUS, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, versify:versify, POEM_MAX:POEM_MAX
 };
 })(typeof window !== 'undefined' ? window : globalThis);
