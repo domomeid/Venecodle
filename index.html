@@ -288,7 +288,7 @@ function perPlace(k){return Math.round(BYTIER[k].length/TIERS[k].p);}
 var $=function(s){return document.querySelector(s);};
 var rolling=false,map=null,routeLine=null,markers=[];
 
-function todayRoll(){var r=S.rolls[0];return r&&r.d===today()&&!r.test?r:null;}
+function todayRoll(){var rs=S.rolls.filter(function(r){return !r.test&&r.d===today();});return rs[0]||null;}
 /* lo que muestra el boleto: en modo prueba el ultimo roll; fuera, el ultimo real */
 function curRoll(){return S.unl?S.rolls[0]:(S.rolls.filter(function(r){return !r.test;})[0]||null);}
 function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
