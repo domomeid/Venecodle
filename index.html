@@ -226,7 +226,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
     <div class="prose">
       <h2>Cómo se juega</h2>
       <ol style="padding-left:20px;display:flex;flex-direction:column;gap:4px">
-        <li>Cada día arrancas un roadtrip de 5 paradas por Venezuela: estados, ciudades y pueblos.</li>
+        <li>Cada día arrancas un roadtrip de 1 a 5 paradas por Venezuela. Normalmente son 5 (55%), pero a veces sale menos: 4 (22%), 3 (13%), 2 (7%) o una sola parada (3%) — a menos paradas, más EP de bonus.</li>
         <li>Ganas EP según lo raro que sea cada parada, sus insignias y las de la ruta completa (kilómetros, regiones, terrenos).</li>
         <li>Completa tu colección y mantén la racha.</li>
       </ol>
@@ -267,7 +267,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
 var KEY='venecodle.v1';
 var TIERS=VL.TIERS,REG=VL.REG,TYPE=VL.TYPE,TERRAIN=VL.TERRAIN,BADGES=VL.BADGES;
 var PLACES=VL.PLACES,BYTIER=VL.BYTIER,BYID=VL.BYID,HOMONYMS=VL.HOMONYMS;
-var NPARADAS=5;
+var NPARADAS=5; /* tope; el sorteo decide 1-5 via VL.pickLegs */
 
 /* azar */
 function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/4294967296;}
@@ -384,7 +384,9 @@ function renderRules(){
  $('#badTable').innerHTML=bb;
  var tb='<tr><th>Badge de ruta / terreno</th><th>EP</th></tr>';
  [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
-  {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15}].forEach(function(x){
+  {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15},
+  {n:'Ruta ligera (4 paradas)',ep:40},{n:'Ruta corta (3 paradas)',ep:120},
+  {n:'Dúo de paradas (2)',ep:300},{n:'¡Salto único! (1 parada)',ep:800}].forEach(function(x){
   tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});
  Object.keys(TERRAIN).forEach(function(g){tb+='<tr><td>'+TERRAIN[g].n+' (terreno)</td><td>'+TERRAIN[g].ep+'</td></tr>';});
  $('#rutTable').innerHTML=tb;
@@ -474,7 +476,7 @@ function doRoll(){
  if(todayRoll()&&!S.unl)return;
  rolling=true;updateBtn();$('#msg').textContent='';
  if(isMaracaibo()){maracaibo(false);rolling=false;return;}
- var picks=VL.pickStops(NPARADAS,rnd);
+ var picks=VL.pickStops(VL.pickLegs(rnd),rnd);
  var ordered=VL.orderRoute(picks);
  var stops=ordered.map(function(p){var res=VL.evalPlace(p);return {id:p.id,n:p.n,s:p.s,k:p.k,t:p.t,ep:res.ep,b:res.b};});
  var rb=VL.evalRoute(stops);

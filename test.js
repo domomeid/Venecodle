@@ -71,6 +71,11 @@ ok(VL.versify(['la','sal',',','la','playa','!']) === 'la sal, la playa!', 'versi
 ok(VL.POEM_MAX === 10, 'limite 10 palabras');
 var rollChoroni = {stops: [{id: 9000007, n: 'Choroní', s: 'Aragua', k: 5, t: 'P', ep: 0, b: []}], rb: []};
 ok(VL.wordPool(rollChoroni).indexOf('el cacao') >= 0, 'palabra custom de custom.js en el pool');
+var legsSeen = {}, rs = seq(7);
+for (var i = 0; i < 300; i++) legsSeen[VL.pickLegs(rs)] = 1;
+ok([1, 2, 3, 4, 5].every(function (n) { return legsSeen[n]; }), 'pickLegs cubre 1-5 paradas');
+ok(VL.pickLegs(function () { return 0.99; }) === 1, 'pickLegs: r>=0.97 da 1 parada');
+ok(VL.evalRoute(roll.stops.slice(0, 1)).some(function (x) { return x.ep === 800; }), 'bonus Salto unico +800 con 1 parada');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
