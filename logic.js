@@ -149,23 +149,42 @@ function stopsName(st){var p=st.id&&BYID[st.id];return p?displayName(p):st.n;}
 /* pegamento base: sin conectores ningún verso cuaja; la puntuación es bonus de badges */
 var POEM_GLUE = ['el','la','los','las','de','en','y','con','sin','un','una','hacia'];
 var POEM_MAX = 10;
+function wordGroups(roll){
+ var groups=[];
+ function grp(src){var g={src:src,ws:[]};groups.push(g);return g;}
+ function put(g,w){if(g.ws.indexOf(w)<0)g.ws.push(w);}
+ var glue=grp('Conectores');POEM_GLUE.forEach(function(w){put(glue,w);});
+ roll.stops.forEach(function(st){
+  var gp=grp(stopsName(st));
+  put(gp,stopsName(st));
+  var p=st.id&&BYID[st.id];
+  if(p&&G.PLACE_WORDS&&G.PLACE_WORDS[p.n])(G.PLACE_WORDS[p.n]).forEach(function(w){put(gp,w);});
+  st.b.forEach(function(x){
+   var ws=POEM_WORDS[x.n];if(!ws)return;
+   var gb=grp(x.n);ws.forEach(function(w){put(gb,w);});
+  });
+ });
+ var gr=grp('Ruta');
+ (roll.rb||[]).forEach(function(x){
+  if(/km recorridos/.test(x.n))['kilómetros','leguas','asfalto'].forEach(function(w){put(gr,w);});
+  if(/Tramo largo/.test(x.n))['galope','la recta larga'].forEach(function(w){put(gr,w);});
+  if(/regiones/.test(x.n))['fronteras','los cruces'].forEach(function(w){put(gr,w);});
+  if(/playa a los Andes|selva al mar/.test(x.n))['del mar a la montaña'].forEach(function(w){put(gr,w);});
+  if(/insular/.test(x.n))['por barco'].forEach(function(w){put(gr,w);});
+ });
+ /* sabor criollo: 1 venezolanismo por cada 100 EP del roll, determinista por roll */
+ var vw=G.POOL_WORDS||[];
+ if(vw.length&&roll.ep>=100){
+  var n=Math.min(8,Math.floor(roll.ep/100));
+  var seed=roll.ep+roll.stops.reduce(function(a,s){return a+(s.id||0);},0);
+  var gv=grp('Sabor criollo');
+  for(var i=0;i<n;i++)put(gv,vw[(seed+i*37)%vw.length]);
+ }
+ return groups.filter(function(g){return g.ws.length;});
+}
 function wordPool(roll){
  var pool=[];
- function add(w){if(pool.indexOf(w)<0)pool.push(w);}
- POEM_GLUE.forEach(add);
- roll.stops.forEach(function(st){
-  st.b.forEach(function(x){(POEM_WORDS[x.n]||[]).forEach(add);});
-  add(stopsName(st));
-  var p=st.id&&BYID[st.id];
-  if(p&&G.PLACE_WORDS&&G.PLACE_WORDS[p.n])(G.PLACE_WORDS[p.n]).forEach(add);
- });
- (roll.rb||[]).forEach(function(x){
-  if(/km recorridos/.test(x.n))['kilómetros','leguas','asfalto'].forEach(add);
-  if(/Tramo largo/.test(x.n))['galope','la recta larga'].forEach(add);
-  if(/regiones/.test(x.n))['fronteras','los cruces'].forEach(add);
-  if(/playa a los Andes|selva al mar/.test(x.n))['del mar a la montaña'].forEach(add);
-  if(/insular/.test(x.n))['por barco'].forEach(add);
- });
+ wordGroups(roll).forEach(function(g){g.ws.forEach(function(w){if(pool.indexOf(w)<0)pool.push(w);});});
  return pool;
 }
 /* une el verso pegando la puntuación al vecino correcto: "sal , playa" -> "sal, playa" */
@@ -214,6 +233,6 @@ G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
  norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace,
- hav:hav, orderRoute:orderRoute, pickStops:pickStops, pickLegs:pickLegs, LEGS:LEGS, LEG_BONUS:LEG_BONUS, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, versify:versify, POEM_MAX:POEM_MAX
+ hav:hav, orderRoute:orderRoute, pickStops:pickStops, pickLegs:pickLegs, LEGS:LEGS, LEG_BONUS:LEG_BONUS, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, wordGroups:wordGroups, versify:versify, POEM_MAX:POEM_MAX
 };
 })(typeof window !== 'undefined' ? window : globalThis);

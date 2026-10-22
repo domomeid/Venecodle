@@ -76,6 +76,12 @@ for (var i = 0; i < 300; i++) legsSeen[VL.pickLegs(rs)] = 1;
 ok([1, 2, 3, 4, 5].every(function (n) { return legsSeen[n]; }), 'pickLegs cubre 1-5 paradas');
 ok(VL.pickLegs(function () { return 0.99; }) === 1, 'pickLegs: r>=0.97 da 1 parada');
 ok(VL.evalRoute(roll.stops.slice(0, 1)).some(function (x) { return x.ep === 800; }), 'bonus Salto unico +800 con 1 parada');
+var grps = VL.wordGroups(roll);
+ok(grps.length > 2 && grps.every(function (g) { return g.src && g.ws.length; }), 'wordGroups por fuente');
+ok(grps.some(function (g) { return g.src === 'Conectores'; }), 'grupo Conectores presente');
+ok(VL.wordGroups({stops: roll.stops, rb: [{n: '500 km recorridos', ep: 25}]}).some(function (g) { return g.src === 'Ruta'; }), 'grupo Ruta con badges de ruta');
+var rich = {d: roll.d, ep: 500, stops: roll.stops, rb: []};
+ok(VL.wordGroups(rich).some(function (g) { return g.src === 'Sabor criollo' && g.ws.length === 5; }), 'sabor criollo: 5 palabras a 500 EP');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
