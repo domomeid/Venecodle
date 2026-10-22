@@ -49,6 +49,10 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .ticket::before,.ticket::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:var(--bg);border:2px solid var(--fg);top:calc(100% - 66px);margin-top:-11px}
 .ticket::before{left:-13px}.ticket::after{right:-13px}
 .t-top{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
+/* rareza del roll: va arriba, invertida — fondo del color de rareza, no chip bordeado */
+#tRar{font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.06em;padding:3px 12px;margin-left:auto;margin-right:auto;text-transform:uppercase}
+#tRar:not([hidden]){background:currentColor}
+#tRar span{color:var(--bg)}
 .t-name{font-size:clamp(44px,13vw,92px);font-weight:900;line-height:.95;text-transform:uppercase;margin:14px 0 6px;overflow-wrap:anywhere;min-height:1em}
 .t-name.idle{color:var(--line)}
 .t-name.long{font-size:clamp(26px,7vw,46px)}
@@ -199,9 +203,9 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <div class="card"><h3 class="tag">El lugar del día</h3><div id="railLB"></div></div>
       </aside>
       <div class="ticket" id="ticket">
-        <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
+        <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tRar" hidden></span><span id="tDate"></span></div>
         <div class="t-name idle" id="tName">? ? ?</div>
-        <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="chip" id="tRar" hidden></span><span class="ep" id="tEp"></span></div>
+        <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
         <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
         <div class="poembox" id="tPoemBox" hidden>
@@ -325,7 +329,7 @@ function showTicket(r){
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
  var rar=VL.rollRarity(r),re=$('#tRar'),rt=TIERS.filter(function(t){return t.n===rar.n;})[0];
- re.hidden=false;re.textContent=rar.n.toUpperCase()+' · '+pctLabel(rar.pct);re.style.color=rt?rt.c:'#795548';
+ re.hidden=false;re.innerHTML='<span>'+rar.n.toUpperCase()+' · '+pctLabel(rar.pct)+'</span>';re.style.color=rt?rt.c:'#795548';
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
  $('#tStops').innerHTML=r.stops.map(function(st,i){return stopHtml(st,i);}).join('');
  $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
