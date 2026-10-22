@@ -99,10 +99,11 @@ ok(VL.wordGroups(rich).some(function (g) { return g.src === 'Extras' && g.ws.len
 ok(grps[grps.length - 1].src === 'Signos' && grps[grps.length - 1].ws.indexOf(',') >= 0, 'Signos ultimo con la coma de Con tilde');
 
 // rareza del roll: percentiles + casos especiales Petare/Guarenas
-ok(VL.rollRarity({ep:4500,stops:[]}).n === 'Común', 'rollRarity comun a 4500 EP');
-ok(VL.rollRarity({ep:9300,stops:[]}).n === 'Raro', 'rollRarity raro a 9300 EP');
-ok(VL.rollRarity({ep:16000,stops:[]}).n === 'Anomalía', 'rollRarity anomalia a 16000 EP');
-ok(VL.rollRarity({ep:30000,stops:[]}).n === 'Legendario', 'rollRarity legendario a 30000 EP');
+ok(VL.rollRarity({ep:3000,stops:[]}).n === 'Común', 'rollRarity comun a 3000 EP');
+ok(VL.rollRarity({ep:4500,stops:[]}).n === 'Poco común', 'rollRarity poco comun a 4500 EP (mediana)');
+ok(VL.rollRarity({ep:9000,stops:[]}).n === 'Épico', 'rollRarity epico a 9000 EP (p94)');
+ok(VL.rollRarity({ep:9300,stops:[]}).n === 'Anomalía', 'rollRarity anomalia a 9300 EP (p95)');
+ok(VL.rollRarity({ep:16000,stops:[]}).n === 'Mítico', 'rollRarity mitico a 16000 EP (p99)');
 ok(VL.rollRarity({ep:100,stops:[{k:7}]}).n === 'Basura', 'rollRarity Basura si hay Guarenas');
 ok(VL.rollRarity({ep:100,stops:[{k:6}]}).n === 'Legendario', 'rollRarity Legendario si hay Petare');
 ok(Math.abs(VL.rollPct(4500) - 50) <= 2, 'rollPct(4500) ~ p50 de la curva');

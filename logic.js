@@ -253,23 +253,26 @@ function migrate(o) {
 /* rareza del roll por percentiles de la distribucion teorica (sim Monte Carlo
    200k sorteos): p99.9~29k, p99~15k, p97~11k, p95~9k, p80~6k.
    Sin backend: el "TOP x%" es contra la curva del juego, no un leaderboard. */
-var RAR = [[29000,'Legendario'],[18500,'Mítico'],[15000,'Anomalía'],
- [11200,'Épico'],[9200,'Raro'],[6300,'Poco común'],[0,'Común']];
-/* cuantiles p0..p100 (paso 5) del Monte Carlo — percentil real del EP */
-var EPQ = [1300,2900,3150,3350,3500,3700,3850,4000,4150,4300,4500,4650,4850,5100,5400,5750,6300,7200,8200,9200,42400];
+/* rareza por percentil (bandas tipo rngdle): Basura <p1, Comun <p50,
+   Poco comun <p75, Raro <p90, Epico <p95, Anomalia <p99, Mitico >=p99.
+   Legendario queda reservado para Petare en ruta. */
+var RARN = [[1,'Basura'],[50,'Común'],[75,'Poco común'],[90,'Raro'],[95,'Épico'],[99,'Anomalía'],[101,'Mítico']];
+/* curva EP->percentil del Monte Carlo 200k: pares (pct, ep) con cola refinada */
+var EPQP = [0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,91,92,93,94,95,96,97,98,99,99.5,99.9,100];
+var EPQ = [1300,2900,3150,3350,3550,3700,3850,4000,4150,4300,4500,4700,4900,5100,5400,5800,6350,7200,8250,8400,8550,8700,8900,9250,9800,11450,13600,15100,18750,29950,40650];
 function rollPct(ep) {
  if (ep <= EPQ[0]) return 0;
  for (var i = 0; i < EPQ.length-1; i++) if (ep < EPQ[i+1])
-  return Math.round((i + (ep-EPQ[i])/(EPQ[i+1]-EPQ[i])) * 5);
+  return EPQP[i] + (ep-EPQ[i])/(EPQ[i+1]-EPQ[i]) * (EPQP[i+1]-EPQP[i]);
  return 100;
 }
 function rollRarity(roll) {
  var ks = roll.stops.map(function (s) {return s.k;});
- if (ks.indexOf(6) >= 0) return {n:'Legendario', pct:99}; /* Petare en ruta */
- if (ks.indexOf(7) >= 0) return {n:'Basura', pct:98};      /* Guarenas en ruta */
- var ep = roll.ep || 0, n = RAR[0][1];
- for (var i = 0; i < RAR.length; i++) if (ep >= RAR[i][0]) {n = RAR[i][1]; break;}
- return {n:n, pct:rollPct(ep)};
+ if (ks.indexOf(6) >= 0) return {n:'Legendario', pct:99.9}; /* Petare en ruta */
+ if (ks.indexOf(7) >= 0) return {n:'Basura', pct:0.5};      /* Guarenas en ruta */
+ var p = Math.round(rollPct(roll.ep || 0) * 10) / 10;
+ for (var i = 0; i < RARN.length; i++) if (p < RARN[i][0]) return {n:RARN[i][1], pct:p};
+ return {n:'Mítico', pct:p};
 }
 
 G.VL = {

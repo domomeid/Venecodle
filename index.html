@@ -312,7 +312,7 @@ function stopHtml(st,i,hide){
 }
 
 /* rareza del roll — percentil teorico: TOP x% si >=p50, BOTTOM x% si no */
-function pctLabel(p){return p>=50?'TOP '+(100-p)+'%':'BOTTOM '+p+'%';}
+function pctLabel(p){var r=function(v){return Math.round(v*10)/10;};return p>=50?'TOP '+r(100-p)+'%':'BOTTOM '+r(p)+'%';}
 function rarLabel(r){var x=VL.rollRarity(r);return x.n+' · '+pctLabel(x.pct);}
 
 function showTicket(r){
