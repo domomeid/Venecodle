@@ -81,7 +81,8 @@ ok(grps.length > 2 && grps.every(function (g) { return g.src && g.ws.length; }),
 ok(grps.some(function (g) { return g.src === 'Conectores'; }), 'grupo Conectores presente');
 ok(VL.wordGroups({stops: roll.stops, rb: [{n: '500 km recorridos', ep: 25}]}).some(function (g) { return g.src === 'Ruta'; }), 'grupo Ruta con badges de ruta');
 var rich = {d: roll.d, ep: 500, stops: roll.stops, rb: []};
-ok(VL.wordGroups(rich).some(function (g) { return g.src === 'Sabor criollo' && g.ws.length === 5; }), 'sabor criollo: 5 palabras a 500 EP');
+ok(VL.wordGroups(rich).some(function (g) { return g.src === 'Extras' && g.ws.length === 5; }), 'extras: 5 venezolanismos a 500 EP');
+ok(grps[grps.length - 1].src === 'Signos' && grps[grps.length - 1].ws.indexOf(',') >= 0, 'Signos ultimo con la coma de Con tilde');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';

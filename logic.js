@@ -147,21 +147,25 @@ var POEM_WORDS = {
  'Llanero':['el llano','el hato','la cola']};
 function stopsName(st){var p=st.id&&BYID[st.id];return p?displayName(p):st.n;}
 /* pegamento base: sin conectores ningún verso cuaja; la puntuación es bonus de badges */
-var POEM_GLUE = ['el','la','los','las','de','en','y','con','sin','un','una','hacia'];
+var POEM_GLUE = ['el','la','los','las','de','en','y','con','sin','un','una','hacia',
+                 'que','por','para','muy','donde','cuando','bajo','sobre','entre','del','al'];
 var POEM_MAX = 10;
 function wordGroups(roll){
  var groups=[];
  function grp(src){var g={src:src,ws:[]};groups.push(g);return g;}
  function put(g,w){if(g.ws.indexOf(w)<0)g.ws.push(w);}
  var glue=grp('Conectores');POEM_GLUE.forEach(function(w){put(glue,w);});
+ var gex=grp('Extras'),gsg=grp('Signos');
+ var punct=/^[,.;:!?—\-…¡¿]$/;
  roll.stops.forEach(function(st){
   var gp=grp(stopsName(st));
   put(gp,stopsName(st));
   var p=st.id&&BYID[st.id];
-  if(p&&G.PLACE_WORDS&&G.PLACE_WORDS[p.n])(G.PLACE_WORDS[p.n]).forEach(function(w){put(gp,w);});
+  if(p&&G.PLACE_WORDS&&G.PLACE_WORDS[p.n])(G.PLACE_WORDS[p.n]).forEach(function(w){put(gex,w);});
   st.b.forEach(function(x){
    var ws=POEM_WORDS[x.n];if(!ws)return;
-   var gb=grp(x.n);ws.forEach(function(w){put(gb,w);});
+   var gb=grp(x.n);
+   ws.forEach(function(w){punct.test(w)?put(gsg,w):put(gb,w);});
   });
  });
  var gr=grp('Ruta');
@@ -172,15 +176,16 @@ function wordGroups(roll){
   if(/playa a los Andes|selva al mar/.test(x.n))['del mar a la montaña'].forEach(function(w){put(gr,w);});
   if(/insular/.test(x.n))['por barco'].forEach(function(w){put(gr,w);});
  });
- /* sabor criollo: 1 venezolanismo por cada 100 EP del roll, determinista por roll */
+ /* venezolanismos custom: 1 por cada 100 EP del roll, determinista por sorteo */
  var vw=G.POOL_WORDS||[];
  if(vw.length&&roll.ep>=100){
-  var n=Math.min(8,Math.floor(roll.ep/100));
+  var n=Math.min(10,Math.floor(roll.ep/100));
   var seed=roll.ep+roll.stops.reduce(function(a,s){return a+(s.id||0);},0);
-  var gv=grp('Sabor criollo');
-  for(var i=0;i<n;i++)put(gv,vw[(seed+i*37)%vw.length]);
+  for(var i=0;i<n;i++)put(gex,vw[(seed+i*37)%vw.length]);
  }
- return groups.filter(function(g){return g.ws.length;});
+ /* orden: conectores/paradas/badges/ruta, luego Extras, Signos siempre al final */
+ return groups.filter(function(g){return g.ws.length&&g!==gex&&g!==gsg;})
+  .concat(gex.ws.length?[gex]:[],gsg.ws.length?[gsg]:[]);
 }
 function wordPool(roll){
  var pool=[];
