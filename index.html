@@ -326,7 +326,7 @@ function showTicket(r){
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
- $('#tStops').innerHTML=r.stops.map(stopHtml).join('');
+ $('#tStops').innerHTML=r.stops.map(function(st,i){return stopHtml(st,i);}).join('');
  $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
   var c=epColor(x.ep);
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
