@@ -49,6 +49,10 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .ticket::before,.ticket::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:var(--bg);border:2px solid var(--fg);top:calc(100% - 66px);margin-top:-11px}
 .ticket::before{left:-13px}.ticket::after{right:-13px}
 .t-top{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
+/* rareza del roll: va arriba, invertida — fondo del color de rareza, no chip bordeado */
+#tRar{font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.06em;padding:3px 12px;margin-left:auto;margin-right:auto;text-transform:uppercase}
+#tRar:not([hidden]){background:currentColor}
+#tRar span{color:var(--bg)}
 .t-name{font-size:clamp(44px,13vw,92px);font-weight:900;line-height:.95;text-transform:uppercase;margin:14px 0 6px;overflow-wrap:anywhere;min-height:1em}
 .t-name.idle{color:var(--line)}
 .t-name.long{font-size:clamp(26px,7vw,46px)}
@@ -58,7 +62,8 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-evenly;align-items:center;margin:14px 0 18px;min-height:30px}
 .badge{font-size:12.5px;border:1.5px solid;padding:2px 9px;background:var(--bg);font-weight:600;display:inline-flex;align-items:baseline}
 .badge i{font-style:normal;font-family:var(--f-mono);margin-left:6px}
-.mini{display:inline-block;border:1px solid;padding:0 5px;margin:2px 3px 2px 0;font-size:10.5px;font-family:var(--f-mono);font-weight:600;white-space:nowrap}
+.mini{display:inline-block;border:1px solid;padding:0 5px;margin:2px 3px 2px 0;font-size:10.5px;font-family:var(--f-mono);font-weight:600;white-space:nowrap;transition:opacity .25s,transform .25s}
+.mini.hide{opacity:0;transform:translateY(4px)}
 .stub{border-top:2px dashed var(--fg);margin:0 -20px;padding:12px 20px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:66px}
 .rolling{animation:flick .12s steps(2) infinite}
 @keyframes flick{50%{opacity:.82}}
@@ -112,6 +117,11 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .pool{display:flex;flex-wrap:wrap;gap:2px}
 .pool .mini{color:var(--muted)}
 .pool .mini:disabled{opacity:.35;cursor:default}
+.phead{display:flex;justify-content:space-between;align-items:center;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px}
+.phead .mini{font-size:9px}
+.pfilter{display:flex;flex-wrap:wrap;gap:2px;margin:6px 0 2px}
+.pfilter .mini{font-size:9.5px;color:var(--muted)}
+.pfilter .mini.on{color:var(--fg);border-color:var(--fg)}
 
 #map{height:320px;border:2px solid var(--fg);background:var(--surface)}
 #map .mk{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:var(--accent);color:var(--on-accent);font:800 14px 'Big Shoulders Display',sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.4)}
@@ -193,13 +203,15 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
         <div class="card"><h3 class="tag">El lugar del día</h3><div id="railLB"></div></div>
       </aside>
       <div class="ticket" id="ticket">
-        <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
+        <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tRar" hidden></span><span id="tDate"></span></div>
         <div class="t-name idle" id="tName">? ? ?</div>
         <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
         <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
         <div class="poembox" id="tPoemBox" hidden>
+          <div class="phead"><span>Tu poema</span><span class="pctl"><button class="mini" id="pClear">Limpiar</button><button class="mini" id="pShuffle">Mezclar</button></span></div>
           <div class="poem" id="tPoem"></div>
+          <div class="pfilter" id="tFilter"></div>
           <div class="pool" id="tPool"></div>
         </div>
         <div class="stub"><span id="tProb">Pulsa el botón para arrancar tu roadtrip de hoy.</span><span id="tWait"></span></div>
@@ -274,7 +286,7 @@ function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/42
 function isMaracaibo(){var a=new Uint32Array(4),x=0n,i;crypto.getRandomValues(a);for(i=0;i<4;i++)x=(x<<32n)|BigInt(a[i]);return x%(10n**20n)===0n;}
 
 /* estado */
-function fresh(){return {v:2,rolls:[],found:{},ep:0,streak:0,last:null,unl:false};}
+function fresh(){return {v:3,rolls:[],found:{},ep:0,streak:0,last:null,unl:false};}
 function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.rolls)return VL.migrate(o);}}catch(e){}return fresh();}
 var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -293,27 +305,33 @@ function todayRoll(){var rs=S.rolls.filter(function(r){return !r.test&&r.d===tod
 function curRoll(){return S.unl?S.rolls[0]:(S.rolls.filter(function(r){return !r.test;})[0]||null);}
 function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
 
-function epColor(ep){return ep>=40?'var(--r4)':ep>=30?'var(--r3)':ep>=20?'var(--r2)':ep>=15?'var(--r1)':'var(--r0)';}
+function epColor(ep){return ep>=400?'var(--r4)':ep>=300?'var(--r3)':ep>=200?'var(--r2)':ep>=150?'var(--r1)':'var(--r0)';}
 
-function stopHtml(st,i){
+function stopHtml(st,i,hide){
  var t=TIERS[st.k];
- var minis=st.b.slice().sort(function(a,b){return b.ep-a.ep;}).map(function(x){return '<span class="mini" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
+ var minis=st.b.slice().sort(function(a,b){return b.ep-a.ep;}).map(function(x){return '<span class="mini'+(hide?' hide':'')+'" data-ep="'+x.ep+'" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
  return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span style="min-width:0"><span class="sn">'+dname(st)+
   '</span><span class="b2">'+minis+'</span></span>'+
-  '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>+'+fmt(st.ep)+'</span></li>';
+  '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>'+(hide?'+…':'+'+fmt(st.ep))+'</span></li>';
 }
+
+/* rareza del roll — percentil teorico: TOP x% si >=p50, BOTTOM x% si no */
+function pctLabel(p){var r=function(v){return Math.round(v*10)/10;};return p>=50?'TOP '+r(100-p)+'%':'BOTTOM '+r(p)+'%';}
+function rarLabel(r){var x=VL.rollRarity(r);return x.n+' · '+pctLabel(x.pct);}
 
 function showTicket(r){
  var name=$('#tName');
- if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;
+ if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;$('#tRar').hidden=true;
   $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';$('#tPoemBox').hidden=true;
   $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);renderExtras(null);return;}
  var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
  name.textContent=dname(st0);name.className='t-name'+(dname(st0).length>16?' long':'');
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
+ var rar=VL.rollRarity(r),re=$('#tRar'),rt=TIERS.filter(function(t){return t.n===rar.n;})[0];
+ re.hidden=false;re.innerHTML='<span>'+rar.n.toUpperCase()+' · '+pctLabel(rar.pct)+'</span>';re.style.color=rt?rt.c:'#795548';
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
- $('#tStops').innerHTML=r.stops.map(stopHtml).join('');
+ $('#tStops').innerHTML=r.stops.map(function(st,i){return stopHtml(st,i);}).join('');
  $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
   var c=epColor(x.ep);
   return '<span class="badge" style="color:'+c+';border-color:'+c+'">'+x.n+'<i>+'+x.ep+'</i></span>';}).join('');
@@ -326,19 +344,29 @@ function showTicket(r){
  renderExtras(r);
 }
 
-/* poema: pool de palabras del roll -> el usuario compone tocando chips */
+/* poema: pool de palabras del roll -> el usuario compone tocando chips;
+   filtro por fuente (badge/parada/ruta) y mezcla, estilo word-bank */
+var curGroups=[],poemFilter=null,poemShuffle=false;
 function renderPoem(r){
- var box=$('#tPoemBox'),pe=$('#tPoem'),pl=$('#tPool');
+ var box=$('#tPoemBox'),pe=$('#tPoem'),pl=$('#tPool'),fl=$('#tFilter');
  if(!r){box.hidden=true;return;}
  box.hidden=false;r.poem=r.poem||[];
- var pool=VL.wordPool(r);
+ curGroups=VL.wordGroups(r);
+ if(poemFilter&&!curGroups.some(function(g){return g.src===poemFilter;}))poemFilter=null;
  pe.innerHTML=(r.poem.length
   ? r.poem.map(function(w,i){return '<button class="mini" data-i="'+i+'">'+w+'</button>';}).join('')
-  : '<span class="hint">Poema base: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma el tuyo tocando palabras ↓</span>')
+  : '<span class="hint">Arma tu verso tocando palabras ↓</span>')
   +'<span class="hint">'+r.poem.length+'/'+VL.POEM_MAX+'</span>';
+ fl.innerHTML='<button class="mini'+(poemFilter===null?' on':'')+'" data-f="">Todo</button>'+curGroups.map(function(g){
+  return '<button class="mini'+(poemFilter===g.src?' on':'')+'" data-f="'+g.src+'">'+g.src+' ·'+g.ws.length+'</button>';
+ }).join('');
+ var words=[];
+ if(poemFilter){var g=curGroups.filter(function(x){return x.src===poemFilter;})[0];if(g)words=g.ws.slice();}
+ else curGroups.forEach(function(g){g.ws.forEach(function(w){if(words.indexOf(w)<0)words.push(w);});});
+ if(poemShuffle)words=words.slice().sort(function(){return rnd()-.5;});
  var full=r.poem.length>=VL.POEM_MAX;
- pl.innerHTML=pool.map(function(w,i){
-  return r.poem.indexOf(w)<0?'<button class="mini" data-p="'+i+'"'+(full?' disabled':'')+'>'+w+'</button>':'';
+ pl.innerHTML=words.map(function(w){
+  return r.poem.indexOf(w)<0?'<button class="mini" data-w="'+w+'"'+(full?' disabled':'')+'>'+w+'</button>':'';
  }).join('');
 }
 
@@ -383,10 +411,10 @@ function renderRules(){
  BADGES.forEach(function(x){bb+='<tr><td style="font-weight:600">'+x.n+'</td><td>'+x.d+'</td><td>'+x.ep+'</td></tr>';});
  $('#badTable').innerHTML=bb;
  var tb='<tr><th>Badge de ruta / terreno</th><th>EP</th></tr>';
- [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
-  {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15},
-  {n:'Ruta ligera (4 paradas)',ep:40},{n:'Ruta corta (3 paradas)',ep:120},
-  {n:'Dúo de paradas (2)',ep:300},{n:'¡Salto único! (1 parada)',ep:800}].forEach(function(x){
+ [{n:'Km recorridos (ruta)',ep:'100/250/500'},{n:'Tramo largo >300 km',ep:200},{n:'Cruza 3+ regiones',ep:250},
+  {n:'De la playa a los Andes',ep:300},{n:'De la selva al mar',ep:300},{n:'Escapada insular',ep:150},
+  {n:'Ruta ligera (4 paradas)',ep:400},{n:'Ruta corta (3 paradas)',ep:1200},
+  {n:'Dúo de paradas (2)',ep:3000},{n:'¡Salto único! (1 parada)',ep:8000}].forEach(function(x){
   tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});
  Object.keys(TERRAIN).forEach(function(g){tb+='<tr><td>'+TERRAIN[g].n+' (terreno)</td><td>'+TERRAIN[g].ep+'</td></tr>';});
  $('#rutTable').innerHTML=tb;
@@ -494,10 +522,11 @@ function doRoll(){
  /* reveal slot-machine: cada parada es un reel vertical que baja y traba
     escalonado; el héroe gira hasta el final y aterriza en la parada 1 */
  var name=$('#tName');
- $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
- $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;
+ $('#tTier').hidden=true;$('#tType').hidden=true;$('#tRar').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+ $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;$('#tPoemBox').hidden=true;
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
- if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();return;}
+ if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
+  $('#msg').textContent='Rareza del roll: '+rarLabel(roll);return;}
  var STAGGER=420,REELMS=1400;
  function strip(finalName,extra){
   var out=[];for(var j=0;j<12+extra;j++)out.push(PLACES[Math.floor(rnd()*PLACES.length)].n);
@@ -523,18 +552,36 @@ function doRoll(){
   for(var i=0;i<items.length;i++){var r=items[i].querySelector('.reel');
    r.style.transitionDelay=(i*STAGGER)+'ms';
    r.style.transform='translateY(-'+(r.children.length-1)*1.4+'em)';}
-  /* cada slot traba -> swap con pop + acumula su EP al contador */
+  /* cada slot traba -> muestra nombre+tier (badges ocultos) y suma el EP base del tier */
   stops.forEach(function(st,i){setTimeout(function(){
-   items[i].outerHTML=stopHtml(st,i);items[i].classList.add('pop');
-   bumpEp(st.ep);
+   items[i].outerHTML=stopHtml(st,i,true);items[i].classList.add('pop');
+   bumpEp(TIERS[st.k].ep);
   },i*STAGGER+REELMS);});
-  /* al final: suman los badges de ruta y se pinta el boleto completo */
-  setTimeout(function(){bumpEp(rb.reduce(function(a,x){return a+x.ep;},0));},total+120);
+  /* fase 2: con las paradas fijas, los badges aparecen uno a uno sumando EP,
+     luego los de ruta, y al final rareza + boleto completo + poema */
+  var nMinis=stops.reduce(function(a,s){return a+s.b.length;},0);
+  setTimeout(function(){
+   /* el reel del heroe ya aterrizo: se fija el nombre grande antes de sumar badges */
+   var n0=dname(stops[0]);
+   name.innerHTML='';name.textContent=n0;name.className='t-name'+(n0.length>16?' long':'');
+   var tc=$('#tTier');tc.hidden=false;tc.textContent='Salida · '+TIERS[stops[0].k].n;tc.style.color=TIERS[stops[0].k].c;
+   var yc=$('#tType'),q0=BYID[stops[0].id];yc.hidden=false;yc.textContent=q0?TYPE[q0.t]+' · '+REG[q0.r]:'';
+   var q=$('#tStops').querySelectorAll('.mini');
+   for(var j=0;j<q.length;j++){(function(el,k){setTimeout(function(){
+    el.classList.remove('hide');bumpEp(+el.dataset.ep||0);
+   },k*140);})(q[j],j);}
+   rb.forEach(function(x,k){setTimeout(function(){
+    var c=epColor(x.ep),el=document.createElement('span');
+    el.className='badge pop';el.style.color=c;el.style.borderColor=c;
+    el.innerHTML=x.n+'<i>+'+x.ep+'</i>';$('#tBadges').appendChild(el);
+    bumpEp(x.ep);
+   },nMinis*140+220+k*240);});
+  },total+200);
+  var fin=total+200+nMinis*140+220+rb.length*240+400;
   setTimeout(function(){
    rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
-   var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
-   if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
-  },total+650);
+   $('#msg').textContent='Rareza del roll: '+rarLabel(roll);
+  },fin);
  });});
 }
 
@@ -567,9 +614,11 @@ $('#shareBtn').addEventListener('click',function(){
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
- var verso='*"'+((r.poem&&r.poem.length?VL.versify(r.poem):VL.poem(r)).replace(/\n/g,' / '))+'"*';
- var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
-  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+verso+'\n\n'+fmt(r.ep)+' EP'+url;
+ var verso=r.poem&&r.poem.length?'\n\n*"'+VL.versify(r.poem).replace(/\n/g,' / ')+'"*':'';
+ var rar=VL.rollRarity(r);
+ var rarSq=rar.n==='Basura'?'🟫':SQ[Math.max(0,TIERS.findIndex(function(t){return t.n===rar.n;}))]||'⬜';
+ var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+rarSq+' '+rar.n.toUpperCase()+' · '+pctLabel(rar.pct)+'\n\n'+legs.join(' →\n')+
+  (badges.length?'\n\n'+badges.join('\n'):'')+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
@@ -585,7 +634,17 @@ $('#tPool').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;
  var r=curRoll();if(!r)return;
  r.poem=r.poem||[];if(r.poem.length>=VL.POEM_MAX)return;
- r.poem.push(VL.wordPool(r)[+b.dataset.p]);save();renderPoem(r);
+ r.poem.push(b.dataset.w);save();renderPoem(r);
+});
+$('#tFilter').addEventListener('click',function(e){
+ var b=e.target.closest('button');if(!b)return;
+ poemFilter=b.dataset.f||null;renderPoem(curRoll());
+});
+$('#pClear').addEventListener('click',function(){
+ var r=curRoll();if(!r)return;r.poem=[];save();renderPoem(r);
+});
+$('#pShuffle').addEventListener('click',function(){
+ poemShuffle=true;renderPoem(curRoll());
 });
 $('#tPoem').addEventListener('click',function(e){
  var b=e.target.closest('button');if(!b)return;

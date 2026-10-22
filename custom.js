@@ -18,3 +18,18 @@ window.PLACE_WORDS={
  'Petare':['el cerro','la escalera'],
  'Guarenas':['la cola','el tranque'],
 };
+
+/* POOL_WORDS — venezolanismos que entran al pool del poema como bonus:
+   1 palabra por cada 100 EP del roll (tope 8), elegidas fijas por sorteo.
+   Agregar o quitar palabras: una entre comillas por línea. */
+window.POOL_WORDS=[
+ 'pana','chévere','chamo','coroto','guayoyo','arepa','cachapa','pepito',
+ 'cambur','cotufa','chicha','bochinche','bonche','bululú','catire','cepillado',
+ 'franela','camionetica','vaina','pavoso','mamerao','chuleta','tigre','arrocero',
+ 'bala fría','mingo','furruco','cuatro','tambor','mapora','cumaco','galerón',
+ 'chinchorro','caimán','morrillo','topocho','mandoca','tequeño','hallaca','toston',
+ 'sancocho','guasacaca','papelón','tizana','frescolita','malta','toddy','hervido',
+ 'chigüire','lapa','zamuro','turpial','tonina','cachicamo','baba','caribe',
+ 'macundales','cacique','cimarrón','quemaíto','araguaney','orquídea','morocoy',
+ 'warao','maguare','curiara','majagua','cuji','samán','apamate','jobo',
+];
