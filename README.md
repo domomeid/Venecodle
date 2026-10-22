@@ -26,14 +26,14 @@ Cada lugar guarda: `id` (geonameid o sintético 9xxxxxx), `n` nombre, `s` estado
 
 | # | Tier | p | EP | Contenido |
 |---|------|---|----|-----------|
-| 0 | Común | .515 | 10 | ciudades grandes |
-| 1 | Poco común | .26 | 25 | ciudades medianas |
-| 2 | Raro | .13 | 60 | municipios, pueblos |
-| 3 | Épico | .06 | 150 | pueblos pequeños, naturales |
-| 4 | Anomalía | .025 | 400 | aldeas y barrios sin población registrada |
-| 5 | Mítico | .005 | 1000 | íconos curados a mano (`MANUAL`) |
-| 6 | Legendario | .001 | 2500 | solo **Petare** |
-| 7 | Basura | .004 | 1 | solo **Guarenas** |
+| 0 | Común | .515 | 100 | ciudades grandes |
+| 1 | Poco común | .26 | 250 | ciudades medianas |
+| 2 | Raro | .13 | 600 | municipios, pueblos |
+| 3 | Épico | .06 | 1500 | pueblos pequeños, naturales |
+| 4 | Anomalía | .025 | 4000 | aldeas y barrios sin población registrada |
+| 5 | Mítico | .005 | 10000 | íconos curados a mano (`MANUAL`) |
+| 6 | Legendario | .001 | 25000 | solo **Petare** |
+| 7 | Basura | .004 | 10 | solo **Guarenas** |
 
 `TIER_OVERRIDE` en el script fija tier por `(nombre, estado)`. **Maracaibo** (la ciudad y su municipio) está excluida del catálogo: mantiene el evento wipe original con probabilidad 1-en-10^20. El Lago de Maracaibo sí entra — no borra nada.
 

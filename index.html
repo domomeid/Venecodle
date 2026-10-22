@@ -58,7 +58,8 @@ nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accen
 .badges{display:flex;flex-wrap:wrap;gap:6px;justify-content:space-evenly;align-items:center;margin:14px 0 18px;min-height:30px}
 .badge{font-size:12.5px;border:1.5px solid;padding:2px 9px;background:var(--bg);font-weight:600;display:inline-flex;align-items:baseline}
 .badge i{font-style:normal;font-family:var(--f-mono);margin-left:6px}
-.mini{display:inline-block;border:1px solid;padding:0 5px;margin:2px 3px 2px 0;font-size:10.5px;font-family:var(--f-mono);font-weight:600;white-space:nowrap}
+.mini{display:inline-block;border:1px solid;padding:0 5px;margin:2px 3px 2px 0;font-size:10.5px;font-family:var(--f-mono);font-weight:600;white-space:nowrap;transition:opacity .25s,transform .25s}
+.mini.hide{opacity:0;transform:translateY(4px)}
 .stub{border-top:2px dashed var(--fg);margin:0 -20px;padding:12px 20px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;font-family:var(--f-mono);font-size:12px;color:var(--muted);min-height:66px}
 .rolling{animation:flick .12s steps(2) infinite}
 @keyframes flick{50%{opacity:.82}}
@@ -281,7 +282,7 @@ function rnd(){var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]/42
 function isMaracaibo(){var a=new Uint32Array(4),x=0n,i;crypto.getRandomValues(a);for(i=0;i<4;i++)x=(x<<32n)|BigInt(a[i]);return x%(10n**20n)===0n;}
 
 /* estado */
-function fresh(){return {v:2,rolls:[],found:{},ep:0,streak:0,last:null,unl:false};}
+function fresh(){return {v:3,rolls:[],found:{},ep:0,streak:0,last:null,unl:false};}
 function load(){try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.rolls)return VL.migrate(o);}}catch(e){}return fresh();}
 var S=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -300,14 +301,19 @@ function todayRoll(){var rs=S.rolls.filter(function(r){return !r.test&&r.d===tod
 function curRoll(){return S.unl?S.rolls[0]:(S.rolls.filter(function(r){return !r.test;})[0]||null);}
 function dname(st){var p=st.id&&BYID[st.id];return p?VL.displayName(p):st.n;}
 
-function epColor(ep){return ep>=40?'var(--r4)':ep>=30?'var(--r3)':ep>=20?'var(--r2)':ep>=15?'var(--r1)':'var(--r0)';}
+function epColor(ep){return ep>=400?'var(--r4)':ep>=300?'var(--r3)':ep>=200?'var(--r2)':ep>=150?'var(--r1)':'var(--r0)';}
 
-function stopHtml(st,i){
+function stopHtml(st,i,hide){
  var t=TIERS[st.k];
- var minis=st.b.slice().sort(function(a,b){return b.ep-a.ep;}).map(function(x){return '<span class="mini" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
+ var minis=st.b.slice().sort(function(a,b){return b.ep-a.ep;}).map(function(x){return '<span class="mini'+(hide?' hide':'')+'" data-ep="'+x.ep+'" style="color:'+epColor(x.ep)+';border-color:'+epColor(x.ep)+'">'+x.n+' +'+x.ep+'</span>';}).join('');
  return '<li><span class="ord" style="color:'+t.c+'">'+(i+1)+'</span><span style="min-width:0"><span class="sn">'+dname(st)+
   '</span><span class="b2">'+minis+'</span></span>'+
-  '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>+'+fmt(st.ep)+'</span></li>';
+  '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>'+(hide?'+…':'+'+fmt(st.ep))+'</span></li>';
+}
+
+/* rareza del roll por bandas de EP — aproximado, es label de feel no estadística */
+function rarLabel(ep){
+ return ep>=50000?'Legendario · TOP ~1%':ep>=15000?'Mítico · TOP ~3%':ep>=5000?'Anomalía · TOP ~10%':ep>=2500?'Épico · TOP ~25%':ep>=1000?'Raro · TOP ~50%':'Común · TOP ~90%';
 }
 
 function showTicket(r){
@@ -400,10 +406,10 @@ function renderRules(){
  BADGES.forEach(function(x){bb+='<tr><td style="font-weight:600">'+x.n+'</td><td>'+x.d+'</td><td>'+x.ep+'</td></tr>';});
  $('#badTable').innerHTML=bb;
  var tb='<tr><th>Badge de ruta / terreno</th><th>EP</th></tr>';
- [{n:'Km recorridos (ruta)',ep:'10/25/50'},{n:'Tramo largo >300 km',ep:20},{n:'Cruza 3+ regiones',ep:25},
-  {n:'De la playa a los Andes',ep:30},{n:'De la selva al mar',ep:30},{n:'Escapada insular',ep:15},
-  {n:'Ruta ligera (4 paradas)',ep:40},{n:'Ruta corta (3 paradas)',ep:120},
-  {n:'Dúo de paradas (2)',ep:300},{n:'¡Salto único! (1 parada)',ep:800}].forEach(function(x){
+ [{n:'Km recorridos (ruta)',ep:'100/250/500'},{n:'Tramo largo >300 km',ep:200},{n:'Cruza 3+ regiones',ep:250},
+  {n:'De la playa a los Andes',ep:300},{n:'De la selva al mar',ep:300},{n:'Escapada insular',ep:150},
+  {n:'Ruta ligera (4 paradas)',ep:400},{n:'Ruta corta (3 paradas)',ep:1200},
+  {n:'Dúo de paradas (2)',ep:3000},{n:'¡Salto único! (1 parada)',ep:8000}].forEach(function(x){
   tb+='<tr><td>'+x.n+'</td><td>'+x.ep+'</td></tr>';});
  Object.keys(TERRAIN).forEach(function(g){tb+='<tr><td>'+TERRAIN[g].n+' (terreno)</td><td>'+TERRAIN[g].ep+'</td></tr>';});
  $('#rutTable').innerHTML=tb;
@@ -512,9 +518,10 @@ function doRoll(){
     escalonado; el héroe gira hasta el final y aterriza en la parada 1 */
  var name=$('#tName');
  $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
- $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;
+ $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;$('#tPoemBox').hidden=true;
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
- if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();return;}
+ if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
+  $('#msg').textContent='Rareza del roll: '+rarLabel(ep);return;}
  var STAGGER=420,REELMS=1400;
  function strip(finalName,extra){
   var out=[];for(var j=0;j<12+extra;j++)out.push(PLACES[Math.floor(rnd()*PLACES.length)].n);
@@ -540,18 +547,31 @@ function doRoll(){
   for(var i=0;i<items.length;i++){var r=items[i].querySelector('.reel');
    r.style.transitionDelay=(i*STAGGER)+'ms';
    r.style.transform='translateY(-'+(r.children.length-1)*1.4+'em)';}
-  /* cada slot traba -> swap con pop + acumula su EP al contador */
+  /* cada slot traba -> muestra nombre+tier (badges ocultos) y suma el EP base del tier */
   stops.forEach(function(st,i){setTimeout(function(){
-   items[i].outerHTML=stopHtml(st,i);items[i].classList.add('pop');
-   bumpEp(st.ep);
+   items[i].outerHTML=stopHtml(st,i,true);items[i].classList.add('pop');
+   bumpEp(TIERS[st.k].ep);
   },i*STAGGER+REELMS);});
-  /* al final: suman los badges de ruta y se pinta el boleto completo */
-  setTimeout(function(){bumpEp(rb.reduce(function(a,x){return a+x.ep;},0));},total+120);
+  /* fase 2: con las paradas fijas, los badges aparecen uno a uno sumando EP,
+     luego los de ruta, y al final rareza + boleto completo + poema */
+  var nMinis=stops.reduce(function(a,s){return a+s.b.length;},0);
+  setTimeout(function(){
+   var q=$('#tStops').querySelectorAll('.mini');
+   for(var j=0;j<q.length;j++){(function(el,k){setTimeout(function(){
+    el.classList.remove('hide');bumpEp(+el.dataset.ep||0);
+   },k*140);})(q[j],j);}
+   rb.forEach(function(x,k){setTimeout(function(){
+    var c=epColor(x.ep),el=document.createElement('span');
+    el.className='badge pop';el.style.color=c;el.style.borderColor=c;
+    el.innerHTML=x.n+'<i>+'+x.ep+'</i>';$('#tBadges').appendChild(el);
+    bumpEp(x.ep);
+   },nMinis*140+220+k*240);});
+  },total+200);
+  var fin=total+200+nMinis*140+220+rb.length*240+400;
   setTimeout(function(){
    rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
-   var maxK=Math.max.apply(null,stops.map(function(s){return s.k;}));
-   if(maxK>=3)$('#msg').textContent=TIERS[maxK].n+' en ruta. Esto no sale todos los días.';
-  },total+650);
+   $('#msg').textContent='Rareza del roll: '+rarLabel(roll.ep);
+  },fin);
  });});
 }
 
