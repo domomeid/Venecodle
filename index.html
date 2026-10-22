@@ -350,7 +350,7 @@ function renderPoem(r){
  if(poemFilter&&!curGroups.some(function(g){return g.src===poemFilter;}))poemFilter=null;
  pe.innerHTML=(r.poem.length
   ? r.poem.map(function(w,i){return '<button class="mini" data-i="'+i+'">'+w+'</button>';}).join('')
-  : '<span class="hint">Poema base: '+VL.poem(r).replace(/\n/g,' / ')+' — o arma el tuyo tocando palabras ↓</span>')
+  : '<span class="hint">Arma tu verso tocando palabras ↓</span>')
   +'<span class="hint">'+r.poem.length+'/'+VL.POEM_MAX+'</span>';
  fl.innerHTML='<button class="mini'+(poemFilter===null?' on':'')+'" data-f="">Todo</button>'+curGroups.map(function(g){
   return '<button class="mini'+(poemFilter===g.src?' on':'')+'" data-f="'+g.src+'">'+g.src+' ·'+g.ws.length+'</button>';
@@ -556,6 +556,11 @@ function doRoll(){
      luego los de ruta, y al final rareza + boleto completo + poema */
   var nMinis=stops.reduce(function(a,s){return a+s.b.length;},0);
   setTimeout(function(){
+   /* el reel del heroe ya aterrizo: se fija el nombre grande antes de sumar badges */
+   var n0=dname(stops[0]);
+   name.innerHTML='';name.textContent=n0;name.className='t-name'+(n0.length>16?' long':'');
+   var tc=$('#tTier');tc.hidden=false;tc.textContent='Salida · '+TIERS[stops[0].k].n;tc.style.color=TIERS[stops[0].k].c;
+   var yc=$('#tType'),q0=BYID[stops[0].id];yc.hidden=false;yc.textContent=q0?TYPE[q0.t]+' · '+REG[q0.r]:'';
    var q=$('#tStops').querySelectorAll('.mini');
    for(var j=0;j<q.length;j++){(function(el,k){setTimeout(function(){
     el.classList.remove('hide');bumpEp(+el.dataset.ep||0);
@@ -604,9 +609,9 @@ $('#shareBtn').addEventListener('click',function(){
  var legs=r.stops.map(function(st){return SQ[st.k]+' '+dname(st)+' +'+st.ep;});
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
- var verso='*"'+((r.poem&&r.poem.length?VL.versify(r.poem):VL.poem(r)).replace(/\n/g,' / '))+'"*';
+ var verso=r.poem&&r.poem.length?'\n\n*"'+VL.versify(r.poem).replace(/\n/g,' / ')+'"*':'';
  var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
-  (badges.length?'\n\n'+badges.join('\n'):'')+'\n\n'+verso+'\n\n'+fmt(r.ep)+' EP'+url;
+  (badges.length?'\n\n'+badges.join('\n'):'')+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
  try{navigator.clipboard.writeText(txt).then(ok,fallback);}catch(e){fallback();}
