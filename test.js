@@ -98,6 +98,14 @@ var rich = {d: roll.d, ep: 5000, stops: roll.stops, rb: []};
 ok(VL.wordGroups(rich).some(function (g) { return g.src === 'Extras' && g.ws.length === 5; }), 'extras: 5 venezolanismos a 5000 EP');
 ok(grps[grps.length - 1].src === 'Signos' && grps[grps.length - 1].ws.indexOf(',') >= 0, 'Signos ultimo con la coma de Con tilde');
 
+// rareza del roll: percentiles + casos especiales Petare/Guarenas
+ok(VL.rollRarity({ep:4500,stops:[]}).n === 'Común', 'rollRarity comun a 4500 EP');
+ok(VL.rollRarity({ep:9300,stops:[]}).n === 'Raro', 'rollRarity raro a 9300 EP');
+ok(VL.rollRarity({ep:16000,stops:[]}).n === 'Anomalía', 'rollRarity anomalia a 16000 EP');
+ok(VL.rollRarity({ep:30000,stops:[]}).n === 'Legendario', 'rollRarity legendario a 30000 EP');
+ok(VL.rollRarity({ep:100,stops:[{k:7}]}).n === 'Basura', 'rollRarity Basura si hay Guarenas');
+ok(VL.rollRarity({ep:100,stops:[{k:6}]}).n === 'Legendario', 'rollRarity Legendario si hay Petare');
+
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
  var h = document.getElementById('res');

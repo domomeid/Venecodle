@@ -250,10 +250,24 @@ function migrate(o) {
  return o;
 }
 
+/* rareza del roll por percentiles de la distribucion teorica (sim Monte Carlo
+   200k sorteos): p99.9~29k, p99~15k, p97~11k, p95~9k, p80~6k.
+   Sin backend: el "TOP x%" es contra la curva del juego, no un leaderboard. */
+var RAR = [[29000,'Legendario','0.1%'],[18500,'Mítico','0.5%'],[15000,'Anomalía','1%'],
+ [11200,'Épico','3%'],[9200,'Raro','5%'],[6300,'Poco común','20%'],[0,'Común','80%']];
+function rollRarity(roll) {
+ var ks = roll.stops.map(function (s) {return s.k;});
+ if (ks.indexOf(6) >= 0) return {n:'Legendario', top:'0.5%'}; /* Petare en ruta */
+ if (ks.indexOf(7) >= 0) return {n:'Basura', top:'2%'};      /* Guarenas en ruta */
+ var ep = roll.ep || 0;
+ for (var i = 0; i < RAR.length; i++) if (ep >= RAR[i][0]) return {n:RAR[i][1], top:RAR[i][2]};
+ return {n:'Común', top:'80%'};
+}
+
 G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
- norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace,
+ norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace, rollRarity:rollRarity,
  hav:hav, orderRoute:orderRoute, pickStops:pickStops, pickLegs:pickLegs, LEGS:LEGS, LEG_BONUS:LEG_BONUS, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, wordGroups:wordGroups, versify:versify, POEM_MAX:POEM_MAX
 };
 })(typeof window !== 'undefined' ? window : globalThis);

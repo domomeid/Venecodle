@@ -311,10 +311,8 @@ function stopHtml(st,i,hide){
   '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>'+(hide?'+…':'+'+fmt(st.ep))+'</span></li>';
 }
 
-/* rareza del roll por bandas de EP — aproximado, es label de feel no estadística */
-function rarLabel(ep){
- return ep>=50000?'Legendario · TOP ~1%':ep>=15000?'Mítico · TOP ~3%':ep>=5000?'Anomalía · TOP ~10%':ep>=2500?'Épico · TOP ~25%':ep>=1000?'Raro · TOP ~50%':'Común · TOP ~90%';
-}
+/* rareza del roll — percentiles teoricos via VL.rollRarity */
+function rarLabel(r){var x=VL.rollRarity(r);return x.n+' · TOP ~'+x.top;}
 
 function showTicket(r){
  var name=$('#tName');
@@ -521,7 +519,7 @@ function doRoll(){
  $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;$('#tPoemBox').hidden=true;
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
-  $('#msg').textContent='Rareza del roll: '+rarLabel(ep);return;}
+  $('#msg').textContent='Rareza del roll: '+rarLabel(roll);return;}
  var STAGGER=420,REELMS=1400;
  function strip(finalName,extra){
   var out=[];for(var j=0;j<12+extra;j++)out.push(PLACES[Math.floor(rnd()*PLACES.length)].n);
@@ -575,7 +573,7 @@ function doRoll(){
   var fin=total+200+nMinis*140+220+rb.length*240+400;
   setTimeout(function(){
    rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
-   $('#msg').textContent='Rareza del roll: '+rarLabel(roll.ep);
+   $('#msg').textContent='Rareza del roll: '+rarLabel(roll);
   },fin);
  });});
 }
@@ -610,7 +608,9 @@ $('#shareBtn').addEventListener('click',function(){
  var badges=(r.rb||[]).map(function(x){return '🧭 '+x.n+' +'+x.ep;});
  var url=/^https?:/.test(location.href)?'\n\n'+location.href:'';
  var verso=r.poem&&r.poem.length?'\n\n*"'+VL.versify(r.poem).replace(/\n/g,' / ')+'"*':'';
- var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+legs.join(' →\n')+
+ var rar=VL.rollRarity(r);
+ var rarSq=rar.n==='Basura'?'🟫':SQ[Math.max(0,TIERS.findIndex(function(t){return t.n===rar.n;}))]||'⬜';
+ var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+rarSq+' '+rar.n.toUpperCase()+' · TOP ~'+rar.top+'\n\n'+legs.join(' →\n')+
   (badges.length?'\n\n'+badges.join('\n'):'')+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}
