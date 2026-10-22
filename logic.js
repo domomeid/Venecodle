@@ -253,21 +253,29 @@ function migrate(o) {
 /* rareza del roll por percentiles de la distribucion teorica (sim Monte Carlo
    200k sorteos): p99.9~29k, p99~15k, p97~11k, p95~9k, p80~6k.
    Sin backend: el "TOP x%" es contra la curva del juego, no un leaderboard. */
-var RAR = [[29000,'Legendario','0.1%'],[18500,'Mítico','0.5%'],[15000,'Anomalía','1%'],
- [11200,'Épico','3%'],[9200,'Raro','5%'],[6300,'Poco común','20%'],[0,'Común','80%']];
+var RAR = [[29000,'Legendario'],[18500,'Mítico'],[15000,'Anomalía'],
+ [11200,'Épico'],[9200,'Raro'],[6300,'Poco común'],[0,'Común']];
+/* cuantiles p0..p100 (paso 5) del Monte Carlo — percentil real del EP */
+var EPQ = [1300,2900,3150,3350,3500,3700,3850,4000,4150,4300,4500,4650,4850,5100,5400,5750,6300,7200,8200,9200,42400];
+function rollPct(ep) {
+ if (ep <= EPQ[0]) return 0;
+ for (var i = 0; i < EPQ.length-1; i++) if (ep < EPQ[i+1])
+  return Math.round((i + (ep-EPQ[i])/(EPQ[i+1]-EPQ[i])) * 5);
+ return 100;
+}
 function rollRarity(roll) {
  var ks = roll.stops.map(function (s) {return s.k;});
- if (ks.indexOf(6) >= 0) return {n:'Legendario', top:'0.5%'}; /* Petare en ruta */
- if (ks.indexOf(7) >= 0) return {n:'Basura', top:'2%'};      /* Guarenas en ruta */
- var ep = roll.ep || 0;
- for (var i = 0; i < RAR.length; i++) if (ep >= RAR[i][0]) return {n:RAR[i][1], top:RAR[i][2]};
- return {n:'Común', top:'80%'};
+ if (ks.indexOf(6) >= 0) return {n:'Legendario', pct:99}; /* Petare en ruta */
+ if (ks.indexOf(7) >= 0) return {n:'Basura', pct:98};      /* Guarenas en ruta */
+ var ep = roll.ep || 0, n = RAR[0][1];
+ for (var i = 0; i < RAR.length; i++) if (ep >= RAR[i][0]) {n = RAR[i][1]; break;}
+ return {n:n, pct:rollPct(ep)};
 }
 
 G.VL = {
  TIERS:TIERS, REG:REG, TYPE:TYPE, TERRAIN:TERRAIN,
  PLACES:PLACES, BYTIER:BYTIER, BYID:BYID, NAME2PLACES:NAME2PLACES, HOMONYMS:HOMONYMS,
- norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace, rollRarity:rollRarity,
+ norm:norm, displayName:displayName, BADGES:BADGES, evalPlace:evalPlace, rollRarity:rollRarity, rollPct:rollPct,
  hav:hav, orderRoute:orderRoute, pickStops:pickStops, pickLegs:pickLegs, LEGS:LEGS, LEG_BONUS:LEG_BONUS, evalRoute:evalRoute, migrate:migrate, poem:poem, wordPool:wordPool, wordGroups:wordGroups, versify:versify, POEM_MAX:POEM_MAX
 };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -201,7 +201,7 @@ label.chk input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent)
       <div class="ticket" id="ticket">
         <div class="t-top"><span id="tNum">Sorteo diario</span><span id="tDate"></span></div>
         <div class="t-name idle" id="tName">? ? ?</div>
-        <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="ep" id="tEp"></span></div>
+        <div class="t-sub"><span class="chip" id="tTier" hidden></span><span class="chip" id="tType" hidden style="color:var(--muted)"></span><span class="chip" id="tRar" hidden></span><span class="ep" id="tEp"></span></div>
         <ol class="stops" id="tStops"></ol>
         <div class="badges" id="tBadges"></div>
         <div class="poembox" id="tPoemBox" hidden>
@@ -311,18 +311,21 @@ function stopHtml(st,i,hide){
   '<span class="meta"><span class="chip" style="color:'+t.c+'">'+t.n+'</span>'+(hide?'+…':'+'+fmt(st.ep))+'</span></li>';
 }
 
-/* rareza del roll — percentiles teoricos via VL.rollRarity */
-function rarLabel(r){var x=VL.rollRarity(r);return x.n+' · TOP ~'+x.top;}
+/* rareza del roll — percentil teorico: TOP x% si >=p50, BOTTOM x% si no */
+function pctLabel(p){return p>=50?'TOP '+(100-p)+'%':'BOTTOM '+p+'%';}
+function rarLabel(r){var x=VL.rollRarity(r);return x.n+' · '+pctLabel(x.pct);}
 
 function showTicket(r){
  var name=$('#tName');
- if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;
+ if(!r){name.textContent='? ? ?';name.className='t-name idle';$('#tTier').hidden=true;$('#tType').hidden=true;$('#tRar').hidden=true;
   $('#tEp').textContent='';$('#tBadges').innerHTML='';$('#tStops').innerHTML='';$('#tPoemBox').hidden=true;
   $('#tProb').textContent='Pulsa el botón para arrancar tu roadtrip de hoy.';$('#shareBtn').hidden=true;renderMap(null);renderExtras(null);return;}
  var st0=r.stops[0],p0=st0.id&&BYID[st0.id],t0=TIERS[st0.k];
  name.textContent=dname(st0);name.className='t-name'+(dname(st0).length>16?' long':'');
  var c=$('#tTier');c.hidden=false;c.textContent='Salida · '+t0.n;c.style.color=t0.c;
  var y=$('#tType');y.hidden=false;y.textContent=(p0?TYPE[p0.t]+' · '+REG[p0.r]:'');
+ var rar=VL.rollRarity(r),re=$('#tRar'),rt=TIERS.filter(function(t){return t.n===rar.n;})[0];
+ re.hidden=false;re.textContent=rar.n.toUpperCase()+' · '+pctLabel(rar.pct);re.style.color=rt?rt.c:'#795548';
  $('#tEp').textContent='+'+fmt(r.ep)+' EP';
  $('#tStops').innerHTML=r.stops.map(function(st,i){return stopHtml(st,i);}).join('');
  $('#tBadges').innerHTML=(r.rb||[]).map(function(x){
@@ -515,7 +518,7 @@ function doRoll(){
  /* reveal slot-machine: cada parada es un reel vertical que baja y traba
     escalonado; el héroe gira hasta el final y aterriza en la parada 1 */
  var name=$('#tName');
- $('#tTier').hidden=true;$('#tType').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
+ $('#tTier').hidden=true;$('#tType').hidden=true;$('#tRar').hidden=true;$('#tEp').textContent='';$('#tBadges').innerHTML='';
  $('#tProb').textContent='Girando…';$('#shareBtn').hidden=true;$('#tPoemBox').hidden=true;
  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
  if(reduce){rolling=false;showTicket(roll);stats();updateBtn();renderCollection();
@@ -610,7 +613,7 @@ $('#shareBtn').addEventListener('click',function(){
  var verso=r.poem&&r.poem.length?'\n\n*"'+VL.versify(r.poem).replace(/\n/g,' / ')+'"*':'';
  var rar=VL.rollRarity(r);
  var rarSq=rar.n==='Basura'?'🟫':SQ[Math.max(0,TIERS.findIndex(function(t){return t.n===rar.n;}))]||'⬜';
- var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+rarSq+' '+rar.n.toUpperCase()+' · TOP ~'+rar.top+'\n\n'+legs.join(' →\n')+
+ var txt='Venecodle 🇻🇪 Roadtrip '+r.d.split('-').reverse().join('/')+'\n\n'+rarSq+' '+rar.n.toUpperCase()+' · '+pctLabel(rar.pct)+'\n\n'+legs.join(' →\n')+
   (badges.length?'\n\n'+badges.join('\n'):'')+verso+'\n\n'+fmt(r.ep)+' EP'+url;
  function ok(){$('#msg').textContent='Copiado. Ya puedes pegarlo en el chat.';}
  function fallback(){$('#msg').textContent=txt.replace(/\n/g,' | ');}

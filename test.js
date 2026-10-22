@@ -105,6 +105,7 @@ ok(VL.rollRarity({ep:16000,stops:[]}).n === 'Anomalía', 'rollRarity anomalia a 
 ok(VL.rollRarity({ep:30000,stops:[]}).n === 'Legendario', 'rollRarity legendario a 30000 EP');
 ok(VL.rollRarity({ep:100,stops:[{k:7}]}).n === 'Basura', 'rollRarity Basura si hay Guarenas');
 ok(VL.rollRarity({ep:100,stops:[{k:6}]}).n === 'Legendario', 'rollRarity Legendario si hay Petare');
+ok(Math.abs(VL.rollPct(4500) - 50) <= 2, 'rollPct(4500) ~ p50 de la curva');
 
 if (typeof document !== 'undefined') {
  document.title = fails ? 'FAIL ' + fails : 'ALL PASS';
